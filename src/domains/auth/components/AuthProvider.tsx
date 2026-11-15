@@ -67,9 +67,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const resposta = await authApi.login(dados);
     tokenRef.current = resposta.accessToken;
     tokenStorage.set(resposta.accessToken);
-    setUsuario(resposta.usuario);
+    setUsuario(resposta.user);
     setStatus("autenticado");
-    return resposta.usuario;
+    return resposta.user;
   }, []);
 
   const atualizarUsuario = useCallback(async () => {

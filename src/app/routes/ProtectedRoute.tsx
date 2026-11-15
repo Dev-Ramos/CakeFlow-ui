@@ -18,7 +18,7 @@ export function ProtectedRoute() {
   if (!usuario) {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
-  if (usuario.precisaDefinirSenha) {
+  if (usuario.mustChangePassword) {
     return <Navigate to="/definir-senha" replace />;
   }
   return <Outlet />;

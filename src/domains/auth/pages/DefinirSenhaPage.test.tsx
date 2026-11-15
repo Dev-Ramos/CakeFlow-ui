@@ -19,8 +19,8 @@ function renderPagina(rota: string) {
 
 function conviteValido() {
   server.use(
-    http.get(`${API}/auth/convites/abc`, () =>
-      HttpResponse.json({ nome: "Júlia Prado", email: "julia@cakeflow.com.br" }),
+    http.get(`${API}/convites/abc`, () =>
+      HttpResponse.json({ name: "Júlia Prado", email: "julia@cakeflow.com.br" }),
     ),
   );
 }
@@ -32,7 +32,7 @@ describe("DefinirSenhaPage", () => {
   });
 
   it("mostra link expirado quando o convite é inválido", async () => {
-    server.use(http.get(`${API}/auth/convites/abc`, () => new HttpResponse(null, { status: 410 })));
+    server.use(http.get(`${API}/convites/abc`, () => new HttpResponse(null, { status: 410 })));
     renderPagina("/definir-senha?token=abc");
 
     expect(await screen.findByRole("heading", { name: "Link expirado" })).toBeInTheDocument();
@@ -69,7 +69,7 @@ describe("DefinirSenhaPage", () => {
     await userEvent.click(screen.getByRole("button", { name: "Definir senha" }));
 
     expect(await screen.findByText("tela de login")).toBeInTheDocument();
-    expect(corpo).toEqual({ token: "abc", senha: "senhaforte1" });
+    expect(corpo).toEqual({ token: "abc", password: "senhaforte1" });
   });
 
   it("mostra o erro do servidor ao definir a senha", async () => {

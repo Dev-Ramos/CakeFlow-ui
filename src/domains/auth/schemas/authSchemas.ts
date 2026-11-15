@@ -4,7 +4,7 @@ export const SENHA_TAMANHO_MINIMO = 8;
 
 export const loginSchema = z.object({
   email: z.string().min(1, "Informe o e-mail.").pipe(z.email("Informe um e-mail válido.")),
-  senha: z.string().min(1, "Informe a senha."),
+  password: z.string().min(1, "Informe a senha."),
 });
 
 export type LoginFormData = z.infer<typeof loginSchema>;
@@ -15,14 +15,14 @@ export type LoginFormData = z.infer<typeof loginSchema>;
  */
 export const definirSenhaSchema = z
   .object({
-    senha: z
+    password: z
       .string()
       .min(1, "Informe a nova senha.")
       .min(SENHA_TAMANHO_MINIMO, `Use pelo menos ${SENHA_TAMANHO_MINIMO} caracteres.`),
-    confirmar: z.string().min(1, "Confirme a senha."),
+    confirmPassword: z.string().min(1, "Confirme a senha."),
   })
-  .refine((dados) => dados.senha === dados.confirmar, {
-    path: ["confirmar"],
+  .refine((dados) => dados.password === dados.confirmPassword, {
+    path: ["confirmPassword"],
     message: "As senhas não conferem.",
   });
 

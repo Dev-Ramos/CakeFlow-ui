@@ -62,7 +62,7 @@ function PorConvite({ token }: { token: string }) {
     );
   }
 
-  const primeiroNome = convite.data.nome.split(" ")[0];
+  const primeiroNome = convite.data.name.split(" ")[0];
 
   return (
     <div className="space-y-6">
@@ -75,9 +75,9 @@ function PorConvite({ token }: { token: string }) {
       <NovaSenhaForm
         enviando={definir.isPending}
         erro={definir.error?.message}
-        onSubmit={(senha) =>
+        onSubmit={(password) =>
           definir.mutate(
-            { token, senha },
+            { token, password },
             {
               onSuccess: () => {
                 toast.success("Senha definida. Entre com a sua nova senha.");
@@ -107,9 +107,9 @@ function TrocaObrigatoria() {
       <NovaSenhaForm
         enviando={definir.isPending}
         erro={definir.error?.message}
-        onSubmit={(senha) =>
+        onSubmit={(password) =>
           definir.mutate(
-            { senha },
+            { password },
             {
               // Ao atualizar o usuário a página redireciona para o início sozinha.
               onSuccess: async () => {
@@ -133,6 +133,6 @@ export function DefinirSenhaPage() {
   const token = params.get("token");
 
   if (token) return <PorConvite token={token} />;
-  if (usuario?.precisaDefinirSenha) return <TrocaObrigatoria />;
+  if (usuario?.mustChangePassword) return <TrocaObrigatoria />;
   return <Navigate to={usuario ? "/" : "/login"} replace />;
 }

@@ -11,10 +11,10 @@ import { ProtectedRoute } from "./ProtectedRoute";
 const API = "http://localhost:3000";
 const usuario = {
   id: 1,
-  nome: "Ana Souza",
+  name: "Ana Souza",
   email: "ana@cakeflow.com.br",
-  cargo: "Administradora",
-  precisaDefinirSenha: false,
+  role: "Administradora",
+  mustChangePassword: false,
 };
 
 function renderRotas() {
@@ -48,7 +48,7 @@ describe("ProtectedRoute", () => {
     tokenStorage.set("token-abc");
     let autorizacao: string | null = null;
     server.use(
-      http.get(`${API}/auth/me`, ({ request }) => {
+      http.get(`${API}/me`, ({ request }) => {
         autorizacao = request.headers.get("authorization");
         return HttpResponse.json(usuario);
       }),
@@ -63,7 +63,7 @@ describe("ProtectedRoute", () => {
   it("com senha pendente, redireciona para definir a senha", async () => {
     tokenStorage.set("token-abc");
     server.use(
-      http.get(`${API}/auth/me`, () => HttpResponse.json({ ...usuario, precisaDefinirSenha: true })),
+      http.get(`${API}/me`, () => HttpResponse.json({ ...usuario, mustChangePassword: true })),
     );
     renderRotas();
 
@@ -72,7 +72,7 @@ describe("ProtectedRoute", () => {
 
   it("com token inválido, limpa a sessão e vai para o login", async () => {
     tokenStorage.set("token-velho");
-    server.use(http.get(`${API}/auth/me`, () => new HttpResponse(null, { status: 401 })));
+    server.use(http.get(`${API}/me`, () => new HttpResponse(null, { status: 401 })));
     renderRotas();
 
     expect(await screen.findByText("tela de login")).toBeInTheDocument();

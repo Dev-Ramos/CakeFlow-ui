@@ -55,11 +55,11 @@ export function Topbar({ onAbrirMenu }: TopbarProps) {
                 aria-hidden="true"
                 className="flex h-9 w-9 items-center justify-center rounded-full border border-primary-fixed-dim bg-primary-fixed text-body-md font-bold text-primary"
               >
-                {iniciais(usuario.nome)}
+                {iniciais(usuario.name)}
               </span>
               <div className="hidden min-w-0 xl:block">
-                <p className="truncate text-label-md text-on-surface">{usuario.nome}</p>
-                <p className="truncate text-label-sm text-tertiary">{usuario.cargo}</p>
+                <p className="truncate text-label-md text-on-surface">{usuario.name}</p>
+                <p className="truncate text-label-sm text-tertiary">{usuario.role}</p>
               </div>
             </div>
           )}

@@ -27,10 +27,10 @@ async function preencherEEnviar(email = "ana@cakeflow.com.br", senha = "segredo1
 
 const usuario = {
   id: 1,
-  nome: "Ana Souza",
+  name: "Ana Souza",
   email: "ana@cakeflow.com.br",
-  cargo: "Administradora",
-  precisaDefinirSenha: false,
+  role: "Administradora",
+  mustChangePassword: false,
 };
 
 afterEach(() => tokenStorage.clear());
@@ -45,7 +45,7 @@ describe("LoginPage", () => {
   });
 
   it("mostra erro quando as credenciais são inválidas", async () => {
-    server.use(http.post(`${API}/auth/login`, () => new HttpResponse(null, { status: 401 })));
+    server.use(http.post(`${API}/login`, () => new HttpResponse(null, { status: 401 })));
     renderLogin();
     await preencherEEnviar();
 
@@ -55,8 +55,8 @@ describe("LoginPage", () => {
 
   it("autentica, guarda o token e vai para o início", async () => {
     server.use(
-      http.post(`${API}/auth/login`, () =>
-        HttpResponse.json({ accessToken: "token-abc", usuario }),
+      http.post(`${API}/login`, () =>
+        HttpResponse.json({ accessToken: "token-abc", user: usuario }),
       ),
     );
     renderLogin();
@@ -66,12 +66,27 @@ describe("LoginPage", () => {
     expect(tokenStorage.get()).toBe("token-abc");
   });
 
+  it("envia os campos em inglês (email e password) para a API", async () => {
+    let corpo: unknown;
+    server.use(
+      http.post(`${API}/login`, async ({ request }) => {
+        corpo = await request.json();
+        return HttpResponse.json({ accessToken: "token-abc", user: usuario });
+      }),
+    );
+    renderLogin();
+    await preencherEEnviar("ana@cakeflow.com.br", "segredo123");
+
+    expect(await screen.findByText("tela inicial")).toBeInTheDocument();
+    expect(corpo).toEqual({ email: "ana@cakeflow.com.br", password: "segredo123" });
+  });
+
   it("redireciona para definir a senha quando é primeiro acesso", async () => {
     server.use(
-      http.post(`${API}/auth/login`, () =>
+      http.post(`${API}/login`, () =>
         HttpResponse.json({
           accessToken: "token-abc",
-          usuario: { ...usuario, precisaDefinirSenha: true },
+          user: { ...usuario, mustChangePassword: true },
         }),
       ),
     );

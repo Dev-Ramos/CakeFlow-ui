@@ -20,13 +20,13 @@ export function LoginPage() {
   const entrar = useLogin();
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", senha: "" },
+    defaultValues: { email: "", password: "" },
   });
 
   // Já autenticado (inclusive logo após o login): sai da tela de login.
   if (usuario) {
     const origem = (location.state as EstadoDeNavegacao | null)?.from?.pathname ?? "/";
-    return <Navigate to={usuario.precisaDefinirSenha ? "/definir-senha" : origem} replace />;
+    return <Navigate to={usuario.mustChangePassword ? "/definir-senha" : origem} replace />;
   }
 
   const erro = entrar.error;
@@ -53,7 +53,7 @@ export function LoginPage() {
           required
         />
         <Formulario.Password
-          name="senha"
+          name="password"
           label="Senha"
           autoComplete="current-password"
           placeholder="Digite sua senha de acesso"

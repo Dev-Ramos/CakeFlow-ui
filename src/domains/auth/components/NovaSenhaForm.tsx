@@ -11,7 +11,7 @@ import {
 } from "../schemas/authSchemas";
 
 export interface NovaSenhaFormProps {
-  onSubmit: (senha: string) => void;
+  onSubmit: (password: string) => void;
   enviando: boolean;
   /** Mensagem de erro do servidor, exibida acima do botão. */
   erro?: string | null;
@@ -21,20 +21,20 @@ export interface NovaSenhaFormProps {
 export function NovaSenhaForm({ onSubmit, enviando, erro }: NovaSenhaFormProps) {
   const form = useForm<DefinirSenhaFormData>({
     resolver: zodResolver(definirSenhaSchema),
-    defaultValues: { senha: "", confirmar: "" },
+    defaultValues: { password: "", confirmPassword: "" },
   });
 
   return (
-    <Formulario form={form} label="Definir senha" onSubmit={(dados) => onSubmit(dados.senha)}>
+    <Formulario form={form} label="Definir senha" onSubmit={(dados) => onSubmit(dados.password)}>
       <Formulario.Password
-        name="senha"
+        name="password"
         label="Nova senha"
         required
         autoComplete="new-password"
         descricao={`Use pelo menos ${SENHA_TAMANHO_MINIMO} caracteres.`}
       />
       <Formulario.Password
-        name="confirmar"
+        name="confirmPassword"
         label="Confirmar senha"
         required
         autoComplete="new-password"
