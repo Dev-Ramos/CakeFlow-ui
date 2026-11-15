@@ -68,9 +68,20 @@ Decisões nas divergências do designer (seguimos as **telas** / `COMPONENTES.md
 
 Estrutura nova: `ui/components` ganhou `Card`, `Badge`, `Chip`, `PageShell`, `PageHeader`; `app/layouts` ganhou `AppLayout`, `Sidebar`, `Topbar`, `AuthLayout` e `navItems.ts` (módulos do design; rotas ainda caem em "Em construção").
 
+## Autenticação (implementada com contrato provisório)
+
+- **Onde mora:** `AuthProvider`, `useAuth` e as telas ficam em `domains/auth/`, não em `app/`. Motivo: domínios não podem importar `app/` (regra de fronteira) e o login precisa atualizar o estado de sessão. `app/` só compõe (`AppProviders`, `ProtectedRoute`, `AppRoutes`). Isso substitui o `AuthProvider` em `app/providers` do SPEC original.
+- **Fluxo:** login → se `usuario.precisaDefinirSenha`, vai para `/definir-senha` (troca obrigatória, já autenticado); convite → `/definir-senha?token=...` (valida o token; link inválido/expirado mostra "Link expirado"). `ProtectedRoute` restaura a sessão pelo token salvo (`GET /auth/me`) e redireciona para `/login` guardando a origem.
+- **401:** o interceptor aciona o handler registrado pelo `AuthProvider` (encerra a sessão, limpa o cache e avisa por toast). Login, convite e restauração de sessão passam `skipUnauthorizedHandler`.
+- **Contrato PROVISÓRIO** (isolado em `domains/auth/types/auth.ts` e `api/authApi.ts`): `POST /auth/login {email, senha} → {accessToken, usuario}`; `GET /auth/me`; `GET /auth/convites/:token → {nome, email}`; `POST /auth/definir-senha {token?, senha}`. `Usuario = {id, nome, email, cargo, precisaDefinirSenha}`.
+- **Token PROVISÓRIO** em `sessionStorage` (`storage/tokenStorage.ts`), acessível a scripts. Trocar por refresh token/cookie HttpOnly quando o contrato definir.
+- **Regra de senha** no front: mínimo de 8 caracteres e confirmação igual (o servidor é a validação definitiva).
+- **Sem tela no design:** "Esqueci minha senha" não foi implementado.
+- **Permissões** (`can(...)`) ficam para a etapa de cargos e permissões.
+
 ## Pendências
 
-- Contrato JWT: endpoints, resposta de login, refresh token, armazenamento.
+- Contrato JWT real: endpoints, resposta de login, refresh token, armazenamento (hoje provisório).
 - Ícones: manter lucide ou carregar Material Symbols (nomes do designer: `skillet`, `cake`...).
 - Componentes do designer ainda não criados: card de bolo, ticket de produção, telemetria do forno, timer badge, modal de confirmação com caixa de impacto, estados de feedback (carregando/erro). São de domínio ou de composição; criar junto dos domínios.
 - Bloco de usuário e cartão do ateliê na sidebar/topbar (dependem do `AuthProvider`).
