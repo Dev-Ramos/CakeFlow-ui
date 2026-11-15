@@ -1,0 +1,189 @@
+/* ==========================================================================
+   Cakeflow • Design Tokens (Artisanal Confectionery Workflow)
+   Origem: extração do designer (DESIGN.md + COMPONENTES.md + tokens.css).
+   Adaptado para Tailwind v4: os tokens vivem em @theme e geram as classes
+   usadas na especificação (bg-primary, text-on-surface, shadow-warm,
+   text-label-md, bg-status-assando ...).
+
+   Regra: componentes usam SOMENTE estes papéis. Nunca cores cruas.
+   Fonte: Nunito Sans (carregada no index.html).
+
+   Decisões sobre as divergências do designer (ver SPEC-DECISOES.md):
+   - primária = token M3 `primary` (#ad244e), como nas telas; a rosa de marca
+     (#d6456b) segue disponível como `brand-strawberry`.
+   - raios = escala padrão do Tailwind (lg 8px, xl 12px), igual às telas.
+   - fundo = `background` (#fff8f6). Sidebar = 256px. Outline = 2px.
+   ========================================================================== */
+
+@theme {
+  /* ---------- 1. Cores M3 ---------- */
+  --color-primary: #ad244e;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #ce3f65;
+  --color-on-primary-container: #fffbff;
+  --color-primary-fixed: #ffd9de;
+  --color-primary-fixed-dim: #ffb2be;
+  --color-on-primary-fixed: #3f0015;
+  --color-on-primary-fixed-variant: #8f0539;
+  --color-inverse-primary: #ffb2be;
+  --color-surface-tint: #b02750;
+
+  --color-secondary: #8c4f18;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #fdac6e;
+  --color-on-secondary-container: #773e06;
+  --color-secondary-fixed: #ffdcc4;
+  --color-secondary-fixed-dim: #ffb781;
+  --color-on-secondary-fixed: #2f1400;
+  --color-on-secondary-fixed-variant: #6f3801;
+
+  --color-tertiary: #6f574b;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #896f62;
+  --color-on-tertiary-container: #fffbff;
+  --color-tertiary-fixed: #fddccc;
+  --color-tertiary-fixed-dim: #e0c0b1;
+  --color-on-tertiary-fixed: #29170e;
+  --color-on-tertiary-fixed-variant: #584237;
+
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+
+  --color-background: #fff8f6;
+  --color-on-background: #271811;
+  --color-surface: #fff8f6;
+  --color-surface-dim: #f1d4c8;
+  --color-surface-bright: #fff8f6;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #fff1eb;
+  --color-surface-container: #ffeae1;
+  --color-surface-container-high: #ffe2d6;
+  --color-surface-container-highest: #faddd0;
+  --color-surface-variant: #faddd0;
+  --color-on-surface: #271811;
+  --color-on-surface-variant: #584144;
+  --color-inverse-surface: #3e2d24;
+  --color-inverse-on-surface: #ffede6;
+  --color-outline: #8b7074;
+  --color-outline-variant: #dfbfc3;
+
+  /* ---------- 2. Marca (papéis semânticos) ---------- */
+  --color-brand-canvas: #fff8f0;
+  --color-brand-surface: #ffffff;
+  --color-brand-strawberry: #d6456b;
+  --color-brand-strawberry-hover: #c0375b;
+  --color-brand-strawberry-active: #aa2d4e;
+  --color-brand-strawberry-dark: #9e1f44;
+  --color-brand-strawberry-wash: #fff0f3;
+  --color-brand-strawberry-wash-active: #fde2e7;
+  --color-brand-caramel: #b9733a;
+  --color-brand-caramel-hover: #a4642f;
+  --color-brand-line: #eedfd5;
+  --color-ink: #3b2a22;
+  --color-ink-body: #6b5347;
+  --color-ink-muted: #967e73;
+  --color-ghost-hover: #f3ece7;
+  --color-row-hover: #fffdf9;
+  --color-scrim: rgba(59, 42, 34, 0.35);
+
+  /* ---------- 3. Famílias funcionais ---------- */
+  --color-oven: #e08738;
+  --color-oven-surface: #fef3e2;
+  --color-oven-border: #fddccc;
+  --color-oven-text: #8c4f18;
+
+  --color-success: #2e7d32;
+  --color-success-surface: #e8f5e9;
+  --color-success-border: #c8e6c9;
+  --color-success-text: #1b5e20;
+
+  --color-info: #1976d2;
+  --color-info-surface: #e3f2fd;
+  --color-info-border: #bbdefb;
+  --color-info-text: #0d47a1;
+
+  --color-danger: #c62828;
+  --color-danger-hover: #b71c1c;
+  --color-danger-surface: #ffebee;
+  --color-danger-border: #ffcdd2;
+  --color-danger-text: #b71c1c;
+
+  /* ---------- 4. Status de produção (17 selos: fundo / texto / borda) ----------
+     Classes: bg-status-{key}  text-status-{key}-fg  border-status-{key}-bd */
+  --color-status-aguardando-forno: #fef3c7;     --color-status-aguardando-forno-fg: #92400e;     --color-status-aguardando-forno-bd: #fde68a;
+  --color-status-assando: #ffedd5;              --color-status-assando-fg: #c2410c;              --color-status-assando-bd: #fed7aa;
+  --color-status-assado: #fef9c3;               --color-status-assado-fg: #854d0e;               --color-status-assado-bd: #fef08a;
+  --color-status-aguardando-recheio: #f3e8ff;   --color-status-aguardando-recheio-fg: #6b21a8;   --color-status-aguardando-recheio-bd: #e9d5ff;
+  --color-status-recheado: #cffafe;             --color-status-recheado-fg: #155e75;             --color-status-recheado-bd: #a5f3fc;
+  --color-status-aguardando-decoracao: #fae8ff; --color-status-aguardando-decoracao-fg: #86198f; --color-status-aguardando-decoracao-bd: #f5d0fe;
+  --color-status-sendo-confeitado: #ffe4e6;     --color-status-sendo-confeitado-fg: #be123c;     --color-status-sendo-confeitado-bd: #fecdd3;
+  --color-status-confeitado: #fdf2f8;           --color-status-confeitado-fg: #9d174d;           --color-status-confeitado-bd: #fbcfe8;
+  --color-status-agendado: #e0f2fe;             --color-status-agendado-fg: #0369a1;             --color-status-agendado-bd: #bae6fd;
+  --color-status-em-producao: #ffedd5;          --color-status-em-producao-fg: #9a3412;          --color-status-em-producao-bd: #fed7aa;
+  --color-status-pendente-entrega: #ecfccb;     --color-status-pendente-entrega-fg: #3f6212;     --color-status-pendente-entrega-bd: #d9f99d;
+  --color-status-pendente-retirada: #dbeafe;    --color-status-pendente-retirada-fg: #1e40af;    --color-status-pendente-retirada-bd: #bfdbfe;
+  --color-status-concluido: #dcfce7;            --color-status-concluido-fg: #15803d;            --color-status-concluido-bd: #bbf7d0;
+  --color-status-cancelamento-em-curso: #fef3c7; --color-status-cancelamento-em-curso-fg: #b45309; --color-status-cancelamento-em-curso-bd: #fde68a;
+  --color-status-cancelado: #fee2e2;            --color-status-cancelado-fg: #991b1b;            --color-status-cancelado-bd: #fecaca;
+  --color-status-disponivel: #d1fae5;           --color-status-disponivel-fg: #065f46;           --color-status-disponivel-bd: #a7f3d0;
+  --color-status-atrasado: #fee2e2;             --color-status-atrasado-fg: #b91c1c;             --color-status-atrasado-bd: #f87171;
+
+  /* ---------- 5. Tipografia ---------- */
+  --font-sans: "Nunito Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --text-headline-xl: 36px;
+  --text-headline-xl--line-height: 44px;
+  --text-headline-xl--font-weight: 800;
+  --text-headline-xl--letter-spacing: -0.02em;
+  --text-headline-xl-mobile: 28px;
+  --text-headline-xl-mobile--line-height: 36px;
+  --text-headline-xl-mobile--font-weight: 800;
+  --text-headline-xl-mobile--letter-spacing: -0.01em;
+  --text-headline-lg: 28px;
+  --text-headline-lg--line-height: 36px;
+  --text-headline-lg--font-weight: 700;
+  --text-headline-lg--letter-spacing: -0.015em;
+  --text-headline-lg-mobile: 22px;
+  --text-headline-lg-mobile--line-height: 30px;
+  --text-headline-lg-mobile--font-weight: 700;
+  --text-headline-lg-mobile--letter-spacing: -0.01em;
+  --text-headline-md: 20px;
+  --text-headline-md--line-height: 28px;
+  --text-headline-md--font-weight: 700;
+  --text-headline-sm: 16px;
+  --text-headline-sm--line-height: 24px;
+  --text-headline-sm--font-weight: 700;
+  --text-body-lg: 16px;
+  --text-body-lg--line-height: 24px;
+  --text-body-md: 14px;
+  --text-body-md--line-height: 20px;
+  --text-body-sm: 12px;
+  --text-body-sm--line-height: 18px;
+  --text-label-lg: 14px;
+  --text-label-lg--line-height: 20px;
+  --text-label-lg--font-weight: 700;
+  --text-label-lg--letter-spacing: 0.01em;
+  --text-label-md: 12px;
+  --text-label-md--line-height: 16px;
+  --text-label-md--font-weight: 700;
+  --text-label-md--letter-spacing: 0.02em;
+  --text-label-sm: 10px;
+  --text-label-sm--line-height: 14px;
+  --text-label-sm--font-weight: 800;
+  --text-label-sm--letter-spacing: 0.04em;
+
+  /* ---------- 6. Espaçamento ----------
+     Escala xs..xl do designer = escala padrão do Tailwind (1, 2, 4, 6, 8);
+     por isso não vira token (evitaria conflito com max-w-md etc.). */
+  --spacing-gutter: 1.5rem;
+  --spacing-gutter-mobile: 0.75rem;
+  --spacing-margin: 2rem;
+  --spacing-margin-mobile: 1rem;
+
+  /* ---------- 7. Elevação (sombra quente chocolate) ---------- */
+  --shadow-warm: 0 2px 8px -2px rgba(59, 42, 34, 0.04), 0 4px 16px -4px rgba(59, 42, 34, 0.06);
+  --shadow-lift: 0 8px 24px -4px rgba(59, 42, 34, 0.08), 0 2px 6px -1px rgba(59, 42, 34, 0.04);
+  --shadow-modal: 0 20px 40px -8px rgba(59, 42, 34, 0.16);
+}
