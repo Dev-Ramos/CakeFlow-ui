@@ -68,25 +68,31 @@ Decisões nas divergências do designer (seguimos as **telas** / `COMPONENTES.md
 
 Estrutura nova: `ui/components` ganhou `Card`, `Badge`, `Chip`, `PageShell`, `PageHeader`; `app/layouts` ganhou `AppLayout`, `Sidebar`, `Topbar`, `AuthLayout` e `navItems.ts` (módulos do design; rotas ainda caem em "Em construção").
 
-## Autenticação (implementada com contrato provisório)
+## Autenticação (implementada)
 
 - **Onde mora:** `AuthProvider`, `useAuth` e as telas ficam em `domains/auth/`, não em `app/`. Motivo: domínios não podem importar `app/` (regra de fronteira) e o login precisa atualizar o estado de sessão. `app/` só compõe (`AppProviders`, `ProtectedRoute`, `AppRoutes`). Isso substitui o `AuthProvider` em `app/providers` do SPEC original.
-- **Fluxo:** login → se `usuario.precisaDefinirSenha`, vai para `/definir-senha` (troca obrigatória, já autenticado); convite → `/definir-senha?token=...` (valida o token; link inválido/expirado mostra "Link expirado"). `ProtectedRoute` restaura a sessão pelo token salvo (`GET /auth/me`) e redireciona para `/login` guardando a origem.
-- **401:** o interceptor aciona o handler registrado pelo `AuthProvider` (encerra a sessão, limpa o cache e avisa por toast). Login, convite e restauração de sessão passam `skipUnauthorizedHandler`.
-- **Contrato** (isolado em `domains/auth/types/auth.ts` e `api/authApi.ts`). **Campos em inglês**, como a API espera, mesmo com as telas em português: `POST /login {email, password} → {accessToken, user}`; `GET /me`; `GET /convites/:token → {name, email}`; `POST /auth/definir-senha {token?, password}`. `Usuario = {id, name, email, role, mustChangePassword}`. Os campos do formulário seguem os mesmos nomes (`password`, `confirmPassword`; este último não é enviado). Ainda não confirmados contra o backend: nomes dos campos de resposta (`user`, `name`, `role`, `mustChangePassword`) e o caminho de definir senha (mantido com `/auth`).
+- **Contrato** (isolado em `domains/auth/types/auth.ts` e `api/authApi.ts`; campos em inglês, como a API espera):
+  - `POST /login {email, password}` → corpo `{ user: {id, name, last_name, email}, roles: string[], permissions: string[] }`; o **token vem no header `Authorization`** da resposta (aceita `Bearer <token>` ou o token puro). O backend precisa expor esse header via `Access-Control-Expose-Headers` para o navegador conseguir lê-lo.
+  - `GET /me` → mesmo formato do login.
+  - `GET /convites/:token` → `{ name, email }` (formato ainda não confirmado) e `POST /auth/definir-senha {token, password}`.
+  - Permissões no formato `recurso.acao` (ex.: `users.create`, `roles.index`). O front mapeia `last_name` → `lastName`; `Usuario = {id, name, lastName, email, roles, permissions}`.
+- **Persistência e F5:** token (`cakeflow.accessToken`) e cópia do usuário com as permissões (`cakeflow.user`) ficam no **localStorage**. Ao carregar: se há token, a aplicação usa a cópia para aparecer na hora (sem tela de carregamento) e revalida em seguida pelo `GET /me`, que confirma que o acesso segue ativo e atualiza dados e permissões (sobrescrevendo a cópia). Sem cópia válida (ou em formato antigo), mostra "Carregando o ateliê" até o `/me` responder.
+  - `/me` com 401/403 → encerra a sessão (limpa token, usuário e cache). Falha de rede/500 com cópia salva → mantém a sessão e avisa por toast.
+  - Logout em uma aba encerra as demais (evento `storage`). Uma resposta tardia do `/me` não reabre uma sessão já encerrada.
+  - **Risco aceito:** localStorage é legível por scripts da página (XSS). Trocar por cookie HttpOnly, se o backend oferecer, mexe só em `storage/tokenStorage.ts` e `storage/usuarioStorage.ts`.
+- **Permissões:** `useAuth().can("users.create")` só controla a UI (esconder/mostrar ações). A autorização real é do servidor.
+- **Primeiro acesso:** apenas pelo link de convite (`/definir-senha?token=...`): valida o token, define a senha e volta ao login; link inválido/expirado mostra "Link expirado". Não há redirecionamento de senha pendente depois do login.
+- **401:** o interceptor aciona o handler registrado pelo `AuthProvider` (encerra a sessão, limpa o cache e avisa por toast). Login, `/me`, convite e definir senha passam `skipUnauthorizedHandler` e tratam a falha por conta própria.
 - **Convenção:** nomes de campos que trafegam na API são sempre em inglês; textos de tela, rótulos e mensagens em português.
-- **Token PROVISÓRIO** em `sessionStorage` (`storage/tokenStorage.ts`), acessível a scripts. Trocar por refresh token/cookie HttpOnly quando o contrato definir.
 - **Regra de senha** no front: mínimo de 8 caracteres e confirmação igual (o servidor é a validação definitiva).
 - **Sem tela no design:** "Esqueci minha senha" não foi implementado.
-- **Permissões** (`can(...)`) ficam para a etapa de cargos e permissões.
 
 ## Pendências
 
-- Contrato JWT real: endpoints, resposta de login, refresh token, armazenamento (hoje provisório).
+- Backend: expor o header `Authorization` via `Access-Control-Expose-Headers` (sem isso o navegador não deixa o front ler o token). Confirmar o formato de `GET /convites/:token` e o caminho `POST /auth/definir-senha`. Não há refresh token: ao expirar, o usuário entra de novo.
 - Ícones: manter lucide ou carregar Material Symbols (nomes do designer: `skillet`, `cake`...).
 - Componentes do designer ainda não criados: card de bolo, ticket de produção, telemetria do forno, timer badge, modal de confirmação com caixa de impacto, estados de feedback (carregando/erro). São de domínio ou de composição; criar junto dos domínios.
-- Bloco de usuário e cartão do ateliê na sidebar/topbar (dependem do `AuthProvider`).
+- Cartão do ateliê no rodapé da sidebar (o usuário e o botão Sair já estão na topbar).
 - Contrato de paginação da API (shape de listagem paginada).
-- `Tabs` e `Alert` não aparecem no design; criar se surgir necessidade.
-- Contrato JWT: endpoints, formato da resposta de login, refresh token, onde armazenar.
+- `Tabs` não aparece como componente no design; criar se surgir necessidade (`Alert` já existe).
 - Nome definitivo do domínio de exemplo (`user_management` → pasta `user-management`).
