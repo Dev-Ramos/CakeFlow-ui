@@ -1,10 +1,14 @@
 import { Suspense } from "react";
 import { Route, Routes } from "react-router";
+import { authRoutes } from "@/domains/auth/routes";
 import { Card } from "@/ui/components/Card";
 import { EmptyState } from "@/ui/components/EmptyState";
+import { LoadingState } from "@/ui/components/LoadingState";
 import { PageHeader } from "@/ui/components/PageHeader";
 import { PageShell } from "@/ui/components/PageShell";
 import { AppLayout } from "../layouts/AppLayout";
+import { AuthLayout } from "../layouts/AuthLayout";
+import { ProtectedRoute } from "./ProtectedRoute";
 
 // Temporários: substituídos pelas rotas dos domínios (lazy por rota).
 function Inicio() {
@@ -34,11 +38,17 @@ function EmConstrucao() {
 
 export function AppRoutes() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<LoadingState title="Carregando" className="min-h-screen" />}>
       <Routes>
-        <Route element={<AppLayout />}>
-          <Route index element={<Inicio />} />
-          <Route path="*" element={<EmConstrucao />} />
+        {/* Públicas */}
+        <Route element={<AuthLayout />}>{authRoutes}</Route>
+
+        {/* Autenticadas */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AppLayout />}>
+            <Route index element={<Inicio />} />
+            <Route path="*" element={<EmConstrucao />} />
+          </Route>
         </Route>
       </Routes>
     </Suspense>
