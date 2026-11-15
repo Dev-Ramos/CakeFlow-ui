@@ -4,9 +4,8 @@ import { LoadingState } from "@/ui/components/LoadingState";
 
 /**
  * Protege as rotas autenticadas:
- * - restaurando a sessão: mostra carregamento;
- * - sem usuário: vai para o login, lembrando a origem;
- * - usuário com senha pendente (primeiro acesso): vai para definir a senha.
+ * - token salvo, mas sem usuário para exibir: mostra carregamento (aguardando o `/me`);
+ * - sem sessão: vai para o login, lembrando a origem.
  */
 export function ProtectedRoute() {
   const { status, usuario } = useAuth();
@@ -17,9 +16,6 @@ export function ProtectedRoute() {
   }
   if (!usuario) {
     return <Navigate to="/login" replace state={{ from: location }} />;
-  }
-  if (usuario.mustChangePassword) {
-    return <Navigate to="/definir-senha" replace />;
   }
   return <Outlet />;
 }

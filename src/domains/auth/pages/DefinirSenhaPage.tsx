@@ -91,48 +91,12 @@ function PorConvite({ token }: { token: string }) {
   );
 }
 
-/** Troca obrigatória: usuário já autenticado, mas marcado para definir a senha. */
-function TrocaObrigatoria() {
-  const { logout, atualizarUsuario } = useAuth();
-  const definir = useDefinirSenha();
-
-  return (
-    <div className="space-y-6">
-      <header className="space-y-1 text-center">
-        <h1 className="text-headline-md text-on-surface">Defina sua nova senha</h1>
-        <p className="text-body-md text-tertiary">
-          Por segurança, crie uma senha pessoal antes de continuar.
-        </p>
-      </header>
-      <NovaSenhaForm
-        enviando={definir.isPending}
-        erro={definir.error?.message}
-        onSubmit={(password) =>
-          definir.mutate(
-            { password },
-            {
-              // Ao atualizar o usuário a página redireciona para o início sozinha.
-              onSuccess: async () => {
-                await atualizarUsuario();
-                toast.success("Senha definida com sucesso.");
-              },
-            },
-          )
-        }
-      />
-      <Button variant="ghost" className="w-full" onClick={logout}>
-        Sair
-      </Button>
-    </div>
-  );
-}
-
+/** A senha só é definida pelo link de convite (`?token=...`); sem ele não há o que fazer aqui. */
 export function DefinirSenhaPage() {
   const [params] = useSearchParams();
   const { usuario } = useAuth();
   const token = params.get("token");
 
   if (token) return <PorConvite token={token} />;
-  if (usuario?.mustChangePassword) return <TrocaObrigatoria />;
   return <Navigate to={usuario ? "/" : "/login"} replace />;
 }

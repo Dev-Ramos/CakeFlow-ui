@@ -26,7 +26,7 @@ export function LoginPage() {
   // Já autenticado (inclusive logo após o login): sai da tela de login.
   if (usuario) {
     const origem = (location.state as EstadoDeNavegacao | null)?.from?.pathname ?? "/";
-    return <Navigate to={usuario.mustChangePassword ? "/definir-senha" : origem} replace />;
+    return <Navigate to={origem} replace />;
   }
 
   const erro = entrar.error;
