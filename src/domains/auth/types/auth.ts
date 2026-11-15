@@ -1,19 +1,32 @@
 /**
  * Contratos do domínio de autenticação.
  *
- * Os nomes dos campos seguem o que a API espera e devolve (inglês), mesmo com
- * as telas em português. Os nomes de campos de resposta e o caminho do
- * endpoint de definir senha ainda são hipótese até serem confirmados contra o
- * backend: ajustar apenas este arquivo e `api/authApi.ts`.
+ * Os nomes dos campos seguem o que a API espera e devolve (inglês, snake_case
+ * no JSON), mesmo com as telas em português. O mapeamento do formato da API
+ * para o modelo do front acontece em `api/authApi.ts`.
  */
 
+/** Formato bruto devolvido por `POST /login` e `GET /me`. */
+export interface AuthPayload {
+  user: {
+    id: number;
+    name: string;
+    last_name: string;
+    email: string;
+  };
+  roles: string[];
+  /** Permissões no formato `recurso.acao` (ex.: `users.create`, `roles.index`). */
+  permissions: string[];
+}
+
+/** Usuário autenticado, como o front o usa. */
 export interface Usuario {
   id: number;
   name: string;
+  lastName: string;
   email: string;
-  role: string;
-  /** Primeiro acesso (ou senha temporária): precisa definir a senha antes de usar o sistema. */
-  mustChangePassword: boolean;
+  roles: string[];
+  permissions: string[];
 }
 
 export interface LoginDTO {
@@ -21,9 +34,10 @@ export interface LoginDTO {
   password: string;
 }
 
-export interface LoginResponse {
+/** Resultado do login: o token vem no header da resposta; os dados, no corpo. */
+export interface LoginResultado {
   accessToken: string;
-  user: Usuario;
+  usuario: Usuario;
 }
 
 /** Dados do convite exibidos na tela de definir senha (link enviado ao usuário). */
@@ -33,7 +47,7 @@ export interface ConviteInfo {
 }
 
 export interface DefinirSenhaDTO {
-  /** Token do link de convite. Ausente na troca obrigatória feita já autenticado. */
-  token?: string;
+  /** Token do link de convite. */
+  token: string;
   password: string;
 }

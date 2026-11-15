@@ -1,29 +1,56 @@
 import { api } from "@/services/http/api";
+import { ApiError } from "@/services/http/errors";
 import type {
+  AuthPayload,
   ConviteInfo,
   DefinirSenhaDTO,
   LoginDTO,
-  LoginResponse,
+  LoginResultado,
   Usuario,
 } from "../types/auth";
 
-/**
- * CONTRATO PROVISÓRIO (ver `types/auth.ts`): endpoints e formatos são hipótese
- * até o backend definir o contrato real.
- */
+/** Header da resposta de login que carrega o token (exige Access-Control-Expose-Headers no backend). */
+const HEADER_DO_TOKEN = "authorization";
+
+function paraUsuario({ user, roles, permissions }: AuthPayload): Usuario {
+  return {
+    id: user.id,
+    name: user.name,
+    lastName: user.last_name,
+    email: user.email,
+    roles,
+    permissions,
+  };
+}
+
+/** Aceita o token puro ou no formato `Bearer <token>`. */
+function extrairToken(valor: unknown): string | null {
+  if (typeof valor !== "string") return null;
+  const token = valor.replace(/^Bearer\s+/i, "").trim();
+  return token || null;
+}
+
 export const authApi = {
-  login: async (payload: LoginDTO): Promise<LoginResponse> => {
+  login: async (payload: LoginDTO): Promise<LoginResultado> => {
     // 401 aqui é "credenciais inválidas", não sessão expirada.
-    const { data } = await api.post("/login", payload, {
+    const resposta = await api.post<AuthPayload>("/login", payload, {
       skipUnauthorizedHandler: true,
     });
-    return data;
+
+    const accessToken = extrairToken(resposta.headers[HEADER_DO_TOKEN]);
+    if (!accessToken) {
+      throw new ApiError("Não foi possível concluir o login: a API não devolveu o token de acesso.", {
+        status: null,
+      });
+    }
+
+    return { accessToken, usuario: paraUsuario(resposta.data) };
   },
 
   me: async (): Promise<Usuario> => {
-    // Quem chama decide o que fazer em caso de falha (ex.: restaurar sessão).
-    const { data } = await api.get("/me", { skipUnauthorizedHandler: true });
-    return data;
+    // Quem chama decide o que fazer em caso de falha (ex.: revalidar a sessão).
+    const { data } = await api.get<AuthPayload>("/me", { skipUnauthorizedHandler: true });
+    return paraUsuario(data);
   },
 
   validarConvite: async (token: string): Promise<ConviteInfo> => {
@@ -34,11 +61,7 @@ export const authApi = {
   },
 
   definirSenha: async ({ token, password }: DefinirSenhaDTO): Promise<void> => {
-    await api.post(
-      "/auth/definir-senha",
-      { token, password },
-      // Com token de convite não há sessão: 401 não deve derrubar nada.
-      { skipUnauthorizedHandler: token !== undefined },
-    );
+    // Convite não tem sessão: um 401 aqui não deve derrubar nada.
+    await api.post("/auth/definir-senha", { token, password }, { skipUnauthorizedHandler: true });
   },
 };
