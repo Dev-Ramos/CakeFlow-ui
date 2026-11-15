@@ -13,6 +13,7 @@ import { FormularioCombobox } from "./Combobox";
 import { FormularioComboboxMulti } from "./ComboboxMulti";
 import { FormularioDatePicker } from "./DatePicker";
 import { FormularioInput } from "./Input";
+import { FormularioPassword } from "./Password";
 import { FormularioRadioBox } from "./RadioBox";
 import { FormularioSelect, FormularioSelectMulti } from "./Select";
 import { FormularioTextarea } from "./Textarea";
@@ -68,6 +69,7 @@ function FormularioBase<TCampos extends FieldValues>({
 
 type FormularioComposto = typeof FormularioBase & {
   Input: typeof FormularioInput;
+  Password: typeof FormularioPassword;
   Textarea: typeof FormularioTextarea;
   Select: typeof FormularioSelect;
   SelectMulti: typeof FormularioSelectMulti;
@@ -88,6 +90,7 @@ type FormularioComposto = typeof FormularioBase & {
  */
 export const Formulario = Object.assign(FormularioBase, {
   Input: FormularioInput,
+  Password: FormularioPassword,
   Textarea: FormularioTextarea,
   Select: FormularioSelect,
   SelectMulti: FormularioSelectMulti,
