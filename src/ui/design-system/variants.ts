@@ -112,3 +112,19 @@ export const badgeVariants = cva(
 );
 
 export type BadgeVariants = VariantProps<typeof badgeVariants>;
+
+export const alertVariants = cva("flex items-start gap-3 rounded-lg border p-3", {
+  variants: {
+    tone: {
+      info: "border-info-border bg-info-surface text-info-text",
+      success: "border-success-border bg-success-surface text-success-text",
+      warning: "border-oven-border bg-oven-surface text-oven-text",
+      danger: "border-danger-border bg-danger-surface text-danger-text",
+    },
+  },
+  defaultVariants: {
+    tone: "info",
+  },
+});
+
+export type AlertVariants = VariantProps<typeof alertVariants>;
