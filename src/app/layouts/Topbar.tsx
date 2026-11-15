@@ -7,8 +7,8 @@ export interface TopbarProps {
   onAbrirMenu: () => void;
 }
 
-function iniciais(nome: string) {
-  return nome
+function iniciais(nomeCompleto: string) {
+  return nomeCompleto
     .split(" ")
     .filter(Boolean)
     .slice(0, 2)
@@ -19,6 +19,7 @@ function iniciais(nome: string) {
 /** Barra superior fixa (64px): menu (celular), busca global, usuário e sair. */
 export function Topbar({ onAbrirMenu }: TopbarProps) {
   const { usuario, logout } = useAuth();
+  const nomeCompleto = usuario ? `${usuario.name} ${usuario.lastName}`.trim() : "";
 
   return (
     <header className="fixed inset-x-0 top-0 z-40 h-16 border-b border-outline-variant bg-surface-container-lowest shadow-sm md:left-[72px] lg:left-64">
@@ -55,11 +56,11 @@ export function Topbar({ onAbrirMenu }: TopbarProps) {
                 aria-hidden="true"
                 className="flex h-9 w-9 items-center justify-center rounded-full border border-primary-fixed-dim bg-primary-fixed text-body-md font-bold text-primary"
               >
-                {iniciais(usuario.name)}
+                {iniciais(nomeCompleto)}
               </span>
               <div className="hidden min-w-0 xl:block">
-                <p className="truncate text-label-md text-on-surface">{usuario.name}</p>
-                <p className="truncate text-label-sm text-tertiary">{usuario.role}</p>
+                <p className="truncate text-label-md text-on-surface">{nomeCompleto}</p>
+                <p className="truncate text-label-sm text-tertiary">{usuario.roles.join(", ")}</p>
               </div>
             </div>
           )}
