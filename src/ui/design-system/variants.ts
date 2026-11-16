@@ -79,7 +79,9 @@ export const controlBase = [
   "rounded-lg border border-outline-variant bg-surface-container-lowest px-3.5 py-2",
   "text-body-md text-on-surface placeholder:text-outline",
   "focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
-  "read-only:cursor-default read-only:bg-surface-container-low",
+  // Atributo `readonly` (e não `:read-only`): a pseudo-classe também casa com <button>,
+  // que é o gatilho do Select, do Combobox e do DatePicker.
+  "[&[readonly]]:cursor-default [&[readonly]]:bg-surface-container-low",
   "disabled:cursor-not-allowed disabled:border-outline-variant/60 disabled:bg-surface-variant/40 disabled:text-outline",
   "aria-invalid:border-error aria-invalid:bg-error-container/20 aria-invalid:focus:ring-error/20",
 ].join(" ");
