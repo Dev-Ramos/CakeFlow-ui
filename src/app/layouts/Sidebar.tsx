@@ -1,13 +1,38 @@
-import { Cake, CirclePlus } from "lucide-react";
-import { Link, NavLink } from "react-router";
-import { buttonVariants } from "@/ui/design-system/variants";
+import { useId, useState } from "react";
+import { Cake, ChevronDown } from "lucide-react";
+import { NavLink, useLocation } from "react-router";
+import { useAuth } from "@/domains/auth/hooks/useAuth";
 import { cn } from "@/ui/lib/cn";
-import { navPrincipal, navRodape, type NavItem } from "./navItems";
+import {
+  filtrarPorPermissao,
+  isNavGroup,
+  navPrincipal,
+  navRodape,
+  type NavGroup,
+  type NavItem,
+} from "./navItems";
 
 /** No tablet a sidebar vira um dock só de ícones (72px): esconde os rótulos. */
 const rotulo = "md:max-lg:hidden";
 
-function ItemDeNavegacao({ item, onNavegar }: { item: NavItem; onNavegar: () => void }) {
+const baseDoItem = cn(
+  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-on-surface-variant",
+  "transition-all duration-150 active:scale-[0.99]",
+  "hover:bg-surface-container-low hover:text-on-surface",
+  "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+);
+
+const itemAtivo = "bg-surface-container text-primary hover:text-primary";
+
+function ItemDeNavegacao({
+  item,
+  onNavegar,
+  semIcone = false,
+}: {
+  item: NavItem;
+  onNavegar: () => void;
+  semIcone?: boolean;
+}) {
   const Icone = item.icon;
   return (
     <NavLink
@@ -16,18 +41,62 @@ function ItemDeNavegacao({ item, onNavegar }: { item: NavItem; onNavegar: () => 
       title={item.label}
       onClick={onNavegar}
       className={({ isActive }) =>
-        cn(
-          "flex items-center gap-3 rounded-lg px-3 py-2.5 text-on-surface-variant",
-          "transition-all duration-150 active:scale-[0.99] md:max-lg:justify-center",
-          "hover:bg-surface-container-low hover:text-on-surface",
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
-          isActive && "bg-surface-container text-primary hover:text-primary",
-        )
+        cn(baseDoItem, "md:max-lg:justify-center", isActive && itemAtivo)
       }
     >
-      <Icone size={20} aria-hidden="true" className="shrink-0" />
-      <span className={cn("text-label-md", rotulo)}>{item.label}</span>
+      {!semIcone && <Icone size={20} aria-hidden="true" className="shrink-0" />}
+      <span className={cn("text-label-md", !semIcone && rotulo)}>{item.label}</span>
     </NavLink>
+  );
+}
+
+/** Grupo expansível. No dock do tablet vira um atalho (ícone) para o primeiro filho. */
+function GrupoDeNavegacao({ grupo, onNavegar }: { grupo: NavGroup; onNavegar: () => void }) {
+  const { pathname } = useLocation();
+  const ativo = grupo.children.some((filho) => pathname.startsWith(filho.to));
+  const [aberto, setAberto] = useState(ativo);
+  const painelId = useId();
+  const Icone = grupo.icon;
+
+  return (
+    <div>
+      <NavLink
+        to={grupo.children[0].to}
+        aria-label={grupo.label}
+        title={grupo.label}
+        onClick={onNavegar}
+        className={cn(baseDoItem, "hidden md:max-lg:flex md:max-lg:justify-center", ativo && itemAtivo)}
+      >
+        <Icone size={20} aria-hidden="true" />
+      </NavLink>
+
+      <div className={rotulo}>
+        <button
+          type="button"
+          aria-expanded={aberto}
+          aria-controls={painelId}
+          onClick={() => setAberto((atual) => !atual)}
+          className={cn(baseDoItem, "w-full", ativo && "text-primary")}
+        >
+          <Icone size={20} aria-hidden="true" className="shrink-0" />
+          <span className="flex-1 text-left text-label-md">{grupo.label}</span>
+          <ChevronDown
+            size={16}
+            aria-hidden="true"
+            className={cn("shrink-0 transition-transform", aberto && "rotate-180")}
+          />
+        </button>
+        {aberto && (
+          <ul id={painelId} className="mt-1 space-y-1 pl-4">
+            {grupo.children.map((filho) => (
+              <li key={filho.to}>
+                <ItemDeNavegacao item={filho} onNavegar={onNavegar} semIcone />
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -39,6 +108,10 @@ export interface SidebarProps {
 
 /** Navegação principal: fixa (256px) no desktop, dock de ícones (72px) no tablet, drawer no celular. */
 export function Sidebar({ aberto, onFechar }: SidebarProps) {
+  const { can } = useAuth();
+  const principal = filtrarPorPermissao(navPrincipal, can) as NavItem[];
+  const rodape = filtrarPorPermissao(navRodape, can);
+
   return (
     <>
       {aberto && (
@@ -65,7 +138,7 @@ export function Sidebar({ aberto, onFechar }: SidebarProps) {
               </div>
             </div>
 
-            <Link
+            {/* <Link
               to="/pedidos/novo"
               aria-label="Novo Pedido"
               onClick={onFechar}
@@ -73,20 +146,29 @@ export function Sidebar({ aberto, onFechar }: SidebarProps) {
             >
               <CirclePlus size={18} aria-hidden="true" />
               <span className={rotulo}>Novo Pedido</span>
-            </Link>
+            </Link> */}
 
             <nav aria-label="Módulos" className="space-y-1">
-              {navPrincipal.map((item) => (
+              {principal.map((item) => (
                 <ItemDeNavegacao key={item.to} item={item} onNavegar={onFechar} />
               ))}
             </nav>
           </div>
 
-          <nav aria-label="Configurações" className="mt-4 space-y-1 border-t border-outline-variant pt-4">
-            {navRodape.map((item) => (
-              <ItemDeNavegacao key={item.to} item={item} onNavegar={onFechar} />
-            ))}
-          </nav>
+          {rodape.length > 0 && (
+            <nav
+              aria-label="Configurações"
+              className="mt-4 space-y-1 border-t border-outline-variant pt-4"
+            >
+              {rodape.map((entrada) =>
+                isNavGroup(entrada) ? (
+                  <GrupoDeNavegacao key={entrada.label} grupo={entrada} onNavegar={onFechar} />
+                ) : (
+                  <ItemDeNavegacao key={entrada.to} item={entrada} onNavegar={onFechar} />
+                ),
+              )}
+            </nav>
+          )}
         </div>
       </aside>
     </>

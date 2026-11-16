@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { Route, Routes } from "react-router";
 import { authRoutes } from "@/domains/auth/routes";
+import { userManagementRoutes } from "@/domains/user-management/routes";
 import { Card } from "@/ui/components/Card";
 import { EmptyState } from "@/ui/components/EmptyState";
 import { LoadingState } from "@/ui/components/LoadingState";
@@ -47,6 +48,7 @@ export function AppRoutes() {
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             <Route index element={<Inicio />} />
+            {userManagementRoutes}
             <Route path="*" element={<EmConstrucao />} />
           </Route>
         </Route>
