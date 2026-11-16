@@ -5,19 +5,9 @@ import { Alert } from "@/ui/components/Alert";
 import { Avatar } from "@/ui/components/Avatar";
 import { Button } from "@/ui/components/Button";
 import { useConfirm } from "@/ui/confirm/useConfirm";
+import { FORMATOS_DE_IMAGEM, TAMANHO_MAXIMO_IMAGEM_MB, validarImagem } from "@/ui/lib/imagem";
 import { toast } from "@/ui/toast/toast";
 import { useEnviarFoto, useRemoverFoto } from "../hooks/useConta";
-
-const FORMATOS = ["image/jpeg", "image/png", "image/webp"];
-export const TAMANHO_MAXIMO_MB = 5;
-
-function validar(arquivo: File): string | null {
-  if (!FORMATOS.includes(arquivo.type)) return "Use uma imagem JPG, PNG ou WebP.";
-  if (arquivo.size > TAMANHO_MAXIMO_MB * 1024 * 1024) {
-    return `A imagem deve ter no máximo ${TAMANHO_MAXIMO_MB} MB.`;
-  }
-  return null;
-}
 
 /**
  * Foto de perfil: escolhe a imagem, mostra a prévia no próprio avatar e só envia
@@ -48,7 +38,7 @@ export function FotoDePerfil({ usuario }: { usuario: Usuario }) {
     event.target.value = "";
     if (!escolhido) return;
 
-    const problema = validar(escolhido);
+    const problema = validarImagem(escolhido);
     setErro(problema);
     setArquivo(problema ? null : escolhido);
   }
@@ -87,14 +77,14 @@ export function FotoDePerfil({ usuario }: { usuario: Usuario }) {
         <div>
           <h2 className="text-headline-sm text-on-surface">Foto de perfil</h2>
           <p className="text-body-sm text-tertiary">
-            JPG, PNG ou WebP, até {TAMANHO_MAXIMO_MB} MB.
+            JPG, PNG ou WebP, até {TAMANHO_MAXIMO_IMAGEM_MB} MB.
           </p>
         </div>
 
         <input
           ref={inputRef}
           type="file"
-          accept={FORMATOS.join(",")}
+          accept={FORMATOS_DE_IMAGEM.join(",")}
           aria-label="Escolher foto de perfil"
           className="sr-only"
           tabIndex={-1}
