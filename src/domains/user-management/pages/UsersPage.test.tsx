@@ -46,7 +46,7 @@ function apiDeUsuarios(extras = 0) {
     editar?: unknown;
     editadoId?: string;
     excluidos: string[];
-    /** Termo `q` de cada chamada a `/roles/options` (`null` = sem busca). */
+    /** Termo `search` de cada chamada a `/roles/options` (`null` = sem busca). */
     buscasDeCargo: Array<string | null>;
   } = { consultas: [], excluidos: [], buscasDeCargo: [] };
 
@@ -56,11 +56,11 @@ function apiDeUsuarios(extras = 0) {
       chamadas.consultas.push(url);
       return HttpResponse.json(paginar(lista, url));
     }),
-    // Rota de options de cargo, com busca server-side (`q`).
+    // Rota de options de cargo, com busca server-side (`search`).
     http.get(`${API}/roles/options`, ({ request }) => {
       const url = new URL(request.url);
-      chamadas.buscasDeCargo.push(url.searchParams.get("q"));
-      const q = (url.searchParams.get("q") ?? "").toLowerCase();
+      chamadas.buscasDeCargo.push(url.searchParams.get("search"));
+      const q = (url.searchParams.get("search") ?? "").toLowerCase();
       const opcoes = [cargoAdmin, cargoBoleiro]
         .filter((cargo) => cargo.name.toLowerCase().includes(q))
         .map(({ id, name }) => ({ value: id, label: name, hint: null }));

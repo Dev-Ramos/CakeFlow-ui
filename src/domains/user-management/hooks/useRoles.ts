@@ -20,10 +20,10 @@ export function useRoles(params?: PageParams) {
  * Options de cargo para seletores, com busca server-side. Passe o termo JÁ com
  * debounce (`useDebounce`); enquanto a nova busca carrega, mantém a lista anterior.
  */
-export function useRoleOptions(busca = "") {
+export function useRoleOptions(search = "") {
   return useQuery({
-    queryKey: roleKeys.options(busca),
-    queryFn: () => rolesApi.options(busca),
+    queryKey: roleKeys.options(search),
+    queryFn: () => rolesApi.options(search),
     placeholderData: keepPreviousData,
     select: (roles) =>
       roles.map(({ value, label, hint }) => ({ value, label, hint: hint ?? undefined })),

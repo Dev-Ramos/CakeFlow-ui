@@ -24,13 +24,13 @@ export const rolesApi = {
   },
 
   /**
-   * Opções para seletores, com busca server-side (`q`). Aceita a lista pura ou
+   * Opções para seletores, com busca server-side (`search`). Aceita a lista pura ou
    * embrulhada em `{ data }`.
    */
-  options: async (busca?: string): Promise<RoleOption[]> => {
-    const termo = busca?.trim();
+  options: async (search?: string): Promise<RoleOption[]> => {
+    const termo = search?.trim();
     const { data } = await api.get<RoleOption[] | { data: RoleOption[] }>("/roles/options", {
-      params: termo ? { q: termo } : undefined,
+      params: termo ? { search: termo } : undefined,
     });
     return Array.isArray(data) ? data : data.data;
   },

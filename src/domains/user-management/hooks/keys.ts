@@ -18,7 +18,7 @@ export const roleKeys = {
   lists: () => [...roleKeys.all, "list"] as const,
   list: (params?: PageParams) => [...roleKeys.lists(), params ?? {}] as const,
   /** Options de seletor, por termo de busca. */
-  options: (busca = "") => [...roleKeys.all, "options", busca] as const,
+  options: (search = "") => [...roleKeys.all, "options", search] as const,
   details: () => [...roleKeys.all, "detail"] as const,
   detail: (id: number) => [...roleKeys.details(), id] as const,
 };
