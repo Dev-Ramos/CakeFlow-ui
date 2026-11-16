@@ -2,6 +2,9 @@ import { Suspense } from "react";
 import { Route, Routes } from "react-router";
 import { accountRoutes } from "@/domains/account/routes";
 import { authRoutes } from "@/domains/auth/routes";
+import { catalogRoutes } from "@/domains/catalog/routes";
+import { ordersRoutes } from "@/domains/orders/routes";
+import { pricingRoutes } from "@/domains/pricing/routes";
 import { userManagementRoutes } from "@/domains/user-management/routes";
 import { Card } from "@/ui/components/Card";
 import { EmptyState } from "@/ui/components/EmptyState";
@@ -50,6 +53,9 @@ export function AppRoutes() {
           <Route element={<AppLayout />}>
             <Route index element={<Inicio />} />
             {accountRoutes}
+            {catalogRoutes}
+            {ordersRoutes}
+            {pricingRoutes}
             {userManagementRoutes}
             <Route path="*" element={<EmConstrucao />} />
           </Route>

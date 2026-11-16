@@ -1,12 +1,17 @@
 import {
   BookOpen,
+  Cake,
+  Ban,
   ChefHat,
+  ClipboardList,
   CircleHelp,
   CookingPot,
   KeyRound,
+  Layers,
   LayoutDashboard,
   Palette,
   Receipt,
+  Tag,
   ShieldCheck,
   Store,
   Users,
@@ -19,8 +24,11 @@ export interface NavItem {
   icon: LucideIcon;
   /** Casa só a rota exata (necessário para o "Início"). */
   end?: boolean;
-  /** Permissão necessária para o item aparecer (`recurso.acao`). Sem ela, é visível a todos. */
-  permission?: string;
+  /**
+   * Permissão necessária para o item aparecer (`recurso.acao`). Com uma lista, basta ter
+   * uma delas. Sem ela, é visível a todos.
+   */
+  permission?: string | string[];
 }
 
 /** Grupo expansível: aparece só se ao menos um filho estiver visível. */
@@ -42,7 +50,7 @@ export function isNavGroup(entrada: NavEntry): entrada is NavGroup {
  */
 export const navPrincipal: NavItem[] = [
   { to: "/", label: "Início", icon: LayoutDashboard, end: true },
-  { to: "/pedidos", label: "Pedidos", icon: Receipt },
+  { to: "/pedidos", label: "Pedidos", icon: Receipt, permission: "orders.index" },
   { to: "/fila-do-forno", label: "Fila do Forno", icon: CookingPot },
   { to: "/lista-do-confeiteiro", label: "Lista do Confeiteiro", icon: ChefHat },
   { to: "/decoracao", label: "Decoração", icon: Palette },
@@ -51,7 +59,30 @@ export const navPrincipal: NavItem[] = [
 ];
 
 export const navRodape: NavEntry[] = [
-  { to: "/catalogo", label: "Catálogo", icon: BookOpen },
+  {
+    label: "Catálogo",
+    icon: BookOpen,
+    children: [
+      {
+        to: "/catalogo/componentes",
+        label: "Componentes",
+        icon: Layers,
+        permission: ["pan_specs.index", "batter_types.index", "fillings.index"],
+      },
+      {
+        to: "/catalogo/fichas-tecnicas",
+        label: "Fichas técnicas",
+        icon: ClipboardList,
+        permission: "technical_sheets.index",
+      },
+      {
+        to: "/catalogo/tipos-de-bolo",
+        label: "Tipos de bolo",
+        icon: Cake,
+        permission: "cake_types.index",
+      },
+    ],
+  },
   {
     label: "Administração",
     icon: ShieldCheck,
@@ -63,6 +94,18 @@ export const navRodape: NavEntry[] = [
         icon: KeyRound,
         permission: "roles.index",
       },
+      {
+        to: "/administracao/precos",
+        label: "Preços e acréscimos",
+        icon: Tag,
+        permission: "pricing.index",
+      },
+      {
+        to: "/administracao/solicitacoes-de-cancelamento",
+        label: "Solicitações de cancelamento",
+        icon: Ban,
+        permission: "orders.approve_cancel",
+      },
     ],
   },
 ];
@@ -72,7 +115,10 @@ export function filtrarPorPermissao(
   entradas: NavEntry[],
   can: (permission: string) => boolean,
 ): NavEntry[] {
-  const visivel = (item: NavItem) => !item.permission || can(item.permission);
+  const visivel = (item: NavItem) => {
+    if (!item.permission) return true;
+    return (Array.isArray(item.permission) ? item.permission : [item.permission]).some(can);
+  };
 
   return entradas.flatMap((entrada): NavEntry[] => {
     if (!isNavGroup(entrada)) return visivel(entrada) ? [entrada] : [];
