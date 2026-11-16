@@ -1,3 +1,4 @@
+import { env } from "@/config/env";
 import { api } from "@/services/http/api";
 import { ApiError } from "@/services/http/errors";
 import type {
@@ -11,12 +12,19 @@ import type {
 /** Header da resposta de login que carrega o token (exige Access-Control-Expose-Headers no backend). */
 const HEADER_DO_TOKEN = "authorization";
 
+/** A API pode devolver a URL da foto relativa (`/rails/...`): completa com o endereço dela. */
+function urlAbsoluta(url: string | null | undefined): string | null {
+  if (!url) return null;
+  return url.startsWith("/") ? `${env.VITE_API_URL.replace(/\/$/, "")}${url}` : url;
+}
+
 function paraUsuario({ user, roles, permissions }: AuthPayload): Usuario {
   return {
     id: user.id,
     name: user.name,
     lastName: user.last_name,
     email: user.email,
+    avatarUrl: urlAbsoluta(user.image_url),
     roles,
     permissions,
   };
