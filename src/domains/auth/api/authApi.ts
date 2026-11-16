@@ -2,7 +2,6 @@ import { api } from "@/services/http/api";
 import { ApiError } from "@/services/http/errors";
 import type {
   AuthPayload,
-  ConviteInfo,
   DefinirSenhaDTO,
   LoginDTO,
   LoginResultado,
@@ -53,15 +52,21 @@ export const authApi = {
     return paraUsuario(data);
   },
 
-  validarConvite: async (token: string): Promise<ConviteInfo> => {
-    const { data } = await api.get(`/convites/${encodeURIComponent(token)}`, {
-      skipUnauthorizedHandler: true,
-    });
-    return data;
-  },
-
-  definirSenha: async ({ token, password }: DefinirSenhaDTO): Promise<void> => {
-    // Convite não tem sessão: um 401 aqui não deve derrubar nada.
-    await api.post("/auth/definir-senha", { token, password }, { skipUnauthorizedHandler: true });
+  /**
+   * `PUT /password`. O token do link NÃO é validado antes: é a API quem o valida,
+   * ao receber a senha. Sem sessão, então um 401 aqui não deve derrubar nada.
+   */
+  definirSenha: async ({ token, password, passwordConfirmation }: DefinirSenhaDTO): Promise<void> => {
+    await api.put(
+      "/password",
+      {
+        user: {
+          reset_password_token: token,
+          password,
+          password_confirmation: passwordConfirmation,
+        },
+      },
+      { skipUnauthorizedHandler: true },
+    );
   },
 };

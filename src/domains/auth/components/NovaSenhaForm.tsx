@@ -11,13 +11,13 @@ import {
 } from "../schemas/authSchemas";
 
 export interface NovaSenhaFormProps {
-  onSubmit: (password: string) => void;
+  onSubmit: (dados: { password: string; passwordConfirmation: string }) => void;
   enviando: boolean;
   /** Mensagem de erro do servidor, exibida acima do botão. */
   erro?: string | null;
 }
 
-/** Formulário de nova senha + confirmação, compartilhado pelo convite e pela troca obrigatória. */
+/** Formulário de nova senha + confirmação, usado na definição de senha pelo link. */
 export function NovaSenhaForm({ onSubmit, enviando, erro }: NovaSenhaFormProps) {
   const form = useForm<DefinirSenhaFormData>({
     resolver: zodResolver(definirSenhaSchema),
@@ -25,7 +25,9 @@ export function NovaSenhaForm({ onSubmit, enviando, erro }: NovaSenhaFormProps) 
   });
 
   return (
-    <Formulario form={form} label="Definir senha" onSubmit={(dados) => onSubmit(dados.password)}>
+    <Formulario form={form} label="Definir senha" onSubmit={(dados) =>
+        onSubmit({ password: dados.password, passwordConfirmation: dados.confirmPassword })
+      }>
       <Formulario.Password
         name="password"
         label="Nova senha"

@@ -40,14 +40,9 @@ export interface LoginResultado {
   usuario: Usuario;
 }
 
-/** Dados do convite exibidos na tela de definir senha (link enviado ao usuário). */
-export interface ConviteInfo {
-  name: string;
-  email: string;
-}
-
 export interface DefinirSenhaDTO {
-  /** Token do link de convite. */
+  /** `reset_password_token` do link enviado ao usuário. Só a API o valida, ao receber a senha. */
   token: string;
   password: string;
+  passwordConfirmation: string;
 }

@@ -1,19 +1,15 @@
 import { Hourglass } from "lucide-react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
 import { ApiError } from "@/services/http/errors";
-import { Alert } from "@/ui/components/Alert";
-import { Button } from "@/ui/components/Button";
-import { LoadingState } from "@/ui/components/LoadingState";
 import { buttonVariants } from "@/ui/design-system/variants";
 import { cn } from "@/ui/lib/cn";
 import { toast } from "@/ui/toast/toast";
 import { NovaSenhaForm } from "../components/NovaSenhaForm";
 import { useAuth } from "../hooks/useAuth";
-import { useConvite } from "../hooks/useConvite";
 import { useDefinirSenha } from "../hooks/useDefinirSenha";
 
-/** Status que indicam convite inválido/expirado (e não uma falha de rede ou do servidor). */
-const STATUS_CONVITE_INVALIDO = [400, 401, 403, 404, 410];
+/** Status em que a API diz que o link não existe mais (a validação do token é só dela, ao enviar a senha). */
+const STATUS_LINK_INVALIDO = [404, 410];
 
 function LinkExpirado() {
   return (
@@ -27,7 +23,7 @@ function LinkExpirado() {
       <div className="space-y-1">
         <h1 className="text-headline-md text-on-surface">Link expirado</h1>
         <p className="text-body-md text-tertiary">
-          Este convite não é mais válido. Peça um novo link à administração do ateliê.
+          Este link não é mais válido. Peça um novo link à administração do ateliê.
         </p>
       </div>
       <Link to="/login" className={cn(buttonVariants({ variant: "neutral" }), "w-full")}>
@@ -37,47 +33,34 @@ function LinkExpirado() {
   );
 }
 
-/** Primeiro acesso por link de convite: valida o token e define a senha. */
-function PorConvite({ token }: { token: string }) {
+/**
+ * Primeiro acesso pelo link. O formulário aparece direto: o `reset_password_token`
+ * não é validado antes, só a API o valida quando a senha é enviada.
+ */
+function PorLink({ token }: { token: string }) {
   const navigate = useNavigate();
-  const convite = useConvite(token);
   const definir = useDefinirSenha();
 
-  if (convite.isPending) {
-    return <LoadingState title="Validando convite" />;
+  if (
+    definir.error instanceof ApiError &&
+    definir.error.status !== null &&
+    STATUS_LINK_INVALIDO.includes(definir.error.status)
+  ) {
+    return <LinkExpirado />;
   }
-
-  if (convite.isError) {
-    const erro = convite.error;
-    if (erro instanceof ApiError && erro.status !== null && STATUS_CONVITE_INVALIDO.includes(erro.status)) {
-      return <LinkExpirado />;
-    }
-    return (
-      <div className="space-y-4">
-        <Alert tone="danger">Não foi possível validar o convite. {erro.message}</Alert>
-        <Button variant="neutral" className="w-full" onClick={() => void convite.refetch()}>
-          Tentar novamente
-        </Button>
-      </div>
-    );
-  }
-
-  const primeiroNome = convite.data.name.split(" ")[0];
 
   return (
     <div className="space-y-6">
       <header className="space-y-1 text-center">
-        <h1 className="text-headline-md text-on-surface">Bem-vindo(a) ao Cakeflow, {primeiroNome}!</h1>
-        <p className="text-body-md text-tertiary">
-          Crie sua senha para ativar o acesso de {convite.data.email}.
-        </p>
+        <h1 className="text-headline-md text-on-surface">Bem-vindo(a) ao Cakeflow!</h1>
+        <p className="text-body-md text-tertiary">Crie sua senha para ativar o seu acesso.</p>
       </header>
       <NovaSenhaForm
         enviando={definir.isPending}
         erro={definir.error?.message}
-        onSubmit={(password) =>
+        onSubmit={({ password, passwordConfirmation }) =>
           definir.mutate(
-            { token, password },
+            { token, password, passwordConfirmation },
             {
               onSuccess: () => {
                 toast.success("Senha definida. Entre com a sua nova senha.");
@@ -91,12 +74,12 @@ function PorConvite({ token }: { token: string }) {
   );
 }
 
-/** A senha só é definida pelo link de convite (`?token=...`); sem ele não há o que fazer aqui. */
+/** A senha só é definida pelo link enviado (`?reset_password_token=...`); sem ele não há o que fazer aqui. */
 export function DefinirSenhaPage() {
   const [params] = useSearchParams();
   const { usuario } = useAuth();
-  const token = params.get("token");
+  const token = params.get("reset_password_token");
 
-  if (token) return <PorConvite token={token} />;
+  if (token) return <PorLink token={token} />;
   return <Navigate to={usuario ? "/" : "/login"} replace />;
 }

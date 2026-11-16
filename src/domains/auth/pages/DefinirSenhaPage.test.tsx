@@ -7,6 +7,8 @@ import { server } from "@/test/server";
 import { API, renderAuth } from "../test/renderAuth";
 import { DefinirSenhaPage } from "./DefinirSenhaPage";
 
+const ROTA = "/definir-senha?reset_password_token=abc";
+
 function renderPagina(rota: string) {
   return renderAuth(
     <Routes>
@@ -17,12 +19,10 @@ function renderPagina(rota: string) {
   );
 }
 
-function conviteValido() {
-  server.use(
-    http.get(`${API}/convites/abc`, () =>
-      HttpResponse.json({ name: "Júlia Prado", email: "julia@cakeflow.com.br" }),
-    ),
-  );
+async function preencherEEnviar(senha: string, confirmacao = senha) {
+  await userEvent.type(await screen.findByLabelText(/^Nova senha/), senha);
+  await userEvent.type(screen.getByLabelText(/Confirmar senha/), confirmacao);
+  await userEvent.click(screen.getByRole("button", { name: "Definir senha" }));
 }
 
 describe("DefinirSenhaPage", () => {
@@ -31,60 +31,66 @@ describe("DefinirSenhaPage", () => {
     expect(await screen.findByText("tela de login")).toBeInTheDocument();
   });
 
-  it("mostra link expirado quando o convite é inválido", async () => {
-    server.use(http.get(`${API}/convites/abc`, () => new HttpResponse(null, { status: 410 })));
-    renderPagina("/definir-senha?token=abc");
+  it("mostra o formulário direto, sem consultar a API antes (o token só é validado no envio)", async () => {
+    // Qualquer requisição sem handler quebraria o teste (`onUnhandledFrame: error`).
+    renderPagina(ROTA);
 
-    expect(await screen.findByRole("heading", { name: "Link expirado" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Voltar ao login" })).toHaveAttribute("href", "/login");
+    expect(await screen.findByRole("heading", { name: /Bem-vindo\(a\) ao Cakeflow!/ })).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Nova senha/)).toBeInTheDocument();
   });
 
-  it("saúda o convidado e valida as senhas", async () => {
-    conviteValido();
-    renderPagina("/definir-senha?token=abc");
+  it("valida as senhas no formulário", async () => {
+    renderPagina(ROTA);
 
-    expect(await screen.findByRole("heading", { name: /Bem-vindo\(a\) ao Cakeflow, Júlia!/ })).toBeInTheDocument();
-
-    await userEvent.type(screen.getByLabelText(/^Nova senha/), "curta");
-    await userEvent.type(screen.getByLabelText(/Confirmar senha/), "outra");
-    await userEvent.click(screen.getByRole("button", { name: "Definir senha" }));
+    await preencherEEnviar("curta", "outra");
 
     expect(await screen.findByText("Use pelo menos 8 caracteres.", { selector: "p[role=alert]" })).toBeInTheDocument();
     expect(screen.getByText("As senhas não conferem.")).toBeInTheDocument();
   });
 
-  it("define a senha com o token do convite e volta para o login", async () => {
-    conviteValido();
+  it("envia PUT /password com o reset_password_token e volta para o login", async () => {
     let corpo: unknown;
     server.use(
-      http.post(`${API}/auth/definir-senha`, async ({ request }) => {
+      http.put(`${API}/password`, async ({ request }) => {
         corpo = await request.json();
         return new HttpResponse(null, { status: 204 });
       }),
     );
-    renderPagina("/definir-senha?token=abc");
+    renderPagina(ROTA);
 
-    await userEvent.type(await screen.findByLabelText(/^Nova senha/), "senhaforte1");
-    await userEvent.type(screen.getByLabelText(/Confirmar senha/), "senhaforte1");
-    await userEvent.click(screen.getByRole("button", { name: "Definir senha" }));
+    await preencherEEnviar("senhaforte1");
 
     expect(await screen.findByText("tela de login")).toBeInTheDocument();
-    expect(corpo).toEqual({ token: "abc", password: "senhaforte1" });
+    expect(corpo).toEqual({
+      user: {
+        reset_password_token: "abc",
+        password: "senhaforte1",
+        password_confirmation: "senhaforte1",
+      },
+    });
   });
 
-  it("mostra o erro do servidor ao definir a senha", async () => {
-    conviteValido();
+  it("mostra o erro da API (ex.: token inválido) no próprio formulário", async () => {
     server.use(
-      http.post(`${API}/auth/definir-senha`, () =>
-        HttpResponse.json({ message: "Senha muito comum." }, { status: 422 }),
+      http.put(`${API}/password`, () =>
+        HttpResponse.json({ errors: ["Reset password token is invalid"] }, { status: 422 }),
       ),
     );
-    renderPagina("/definir-senha?token=abc");
+    renderPagina(ROTA);
 
-    await userEvent.type(await screen.findByLabelText(/^Nova senha/), "senhaforte1");
-    await userEvent.type(screen.getByLabelText(/Confirmar senha/), "senhaforte1");
-    await userEvent.click(screen.getByRole("button", { name: "Definir senha" }));
+    await preencherEEnviar("senhaforte1");
 
-    expect(await screen.findByText("Senha muito comum.")).toBeInTheDocument();
+    expect(await screen.findByText(/Reset password token is invalid/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Definir senha" })).toBeInTheDocument();
+  });
+
+  it("mostra link expirado quando a API diz que o link não existe mais", async () => {
+    server.use(http.put(`${API}/password`, () => new HttpResponse(null, { status: 410 })));
+    renderPagina(ROTA);
+
+    await preencherEEnviar("senhaforte1");
+
+    expect(await screen.findByRole("heading", { name: "Link expirado" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Voltar ao login" })).toHaveAttribute("href", "/login");
   });
 });
