@@ -13,6 +13,8 @@ export interface AuthPayload {
     name: string;
     last_name: string;
     email: string;
+    /** URL pública e permanente da foto de perfil; `null` quando o usuário não tem foto. */
+    image_url?: string | null;
   };
   roles: string[];
   /** Permissões no formato `recurso.acao` (ex.: `users.create`, `roles.index`). */
@@ -25,6 +27,8 @@ export interface Usuario {
   name: string;
   lastName: string;
   email: string;
+  /** URL absoluta da foto de perfil, ou `null` (mostra as iniciais). */
+  avatarUrl: string | null;
   roles: string[];
   permissions: string[];
 }

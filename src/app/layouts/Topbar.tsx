@@ -1,19 +1,12 @@
 import { Bell, LogOut, Menu, Search } from "lucide-react";
+import { Link } from "react-router";
 import { useAuth } from "@/domains/auth/hooks/useAuth";
+import { Avatar } from "@/ui/components/Avatar";
 import { Button } from "@/ui/components/Button";
 import { Input } from "@/ui/components/Input";
 
 export interface TopbarProps {
   onAbrirMenu: () => void;
-}
-
-function iniciais(nomeCompleto: string) {
-  return nomeCompleto
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((parte) => parte[0].toUpperCase())
-    .join("");
 }
 
 /** Barra superior fixa (64px): menu (celular), busca global, usuário e sair. */
@@ -51,18 +44,18 @@ export function Topbar({ onAbrirMenu }: TopbarProps) {
           <Button variant="ghost" size="icon" aria-label="Notificações" icon={<Bell size={20} />} />
           <span aria-hidden="true" className="h-6 w-px bg-outline-variant" />
           {usuario && (
-            <div className="flex items-center gap-3">
-              <span
-                aria-hidden="true"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-primary-fixed-dim bg-primary-fixed text-body-md font-bold text-primary"
-              >
-                {iniciais(nomeCompleto)}
-              </span>
+            <Link
+              to="/minha-conta"
+              aria-label="Minha conta"
+              title="Minha conta"
+              className="flex items-center gap-3 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            >
+              <Avatar nome={nomeCompleto} src={usuario.avatarUrl} decorativo />
               <div className="hidden min-w-0 xl:block">
                 <p className="truncate text-label-md text-on-surface">{nomeCompleto}</p>
                 <p className="truncate text-label-sm text-tertiary">{usuario.roles.join(", ")}</p>
               </div>
-            </div>
+            </Link>
           )}
           <Button
             variant="ghost"

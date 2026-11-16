@@ -9,6 +9,8 @@ export const usuarioSchema = z.object({
   name: z.string(),
   lastName: z.string(),
   email: z.string(),
+  // Cópias salvas antes da foto de perfil não têm o campo.
+  avatarUrl: z.string().nullable().default(null),
   roles: z.array(z.string()),
   permissions: z.array(z.string()),
 });

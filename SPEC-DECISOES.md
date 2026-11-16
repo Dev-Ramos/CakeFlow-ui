@@ -87,6 +87,10 @@ Estrutura nova: `ui/components` ganhou `Card`, `Badge`, `Chip`, `PageShell`, `Pa
 - **Regra de senha** no front: mínimo de 8 caracteres e confirmação igual (o servidor é a validação definitiva).
 - **Sem tela no design:** "Esqueci minha senha" não foi implementado.
 
+## Minha conta (`domains/account`)
+
+Documentação completa da tela em [docs/MINHA-CONTA.md](docs/MINHA-CONTA.md). Resumo: rota `/minha-conta` (qualquer usuário logado), com foto de perfil, nome/sobrenome editáveis e troca de senha, seguindo o contrato `docs/API-perfil.md` da API (`PATCH /me`, `PATCH /me/password`; `user.image_url`). `Usuario.avatarUrl` vem de `image_url`. O `Content-Type` não é fixado na instância do Axios (JSON sai como `application/json`; FormData ganha o boundary). `ApiError.apiCode` expõe o `code` do corpo da API.
+
 ## Paginação das listagens
 
 - **Contrato da API:** `{ data: [...], meta: { page, limit, count, pages } }` (`count` = total de registros, `pages` = total de páginas). Tipos e utilitários em `services/http/pagination.ts` (`Paginated<T>`, `PageMeta`, `PageParams`, `mapPaginated`, `buscarTodas`).

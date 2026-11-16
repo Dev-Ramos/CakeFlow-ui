@@ -27,6 +27,16 @@ export class ApiError extends Error {
   get isNetworkError() {
     return this.status === null;
   }
+
+  /** `code` que a API manda no corpo (ex.: `invalid_current_password`); não confundir com `code` do Axios. */
+  get apiCode(): string | undefined {
+    const data = this.data;
+    if (data && typeof data === "object" && "code" in data) {
+      const code = (data as { code: unknown }).code;
+      return typeof code === "string" ? code : undefined;
+    }
+    return undefined;
+  }
 }
 
 const MENSAGEM_REDE = "Não foi possível conectar ao servidor.";

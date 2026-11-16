@@ -14,6 +14,7 @@ export const usuario: Usuario = {
   name: "Super",
   lastName: "Admin",
   email: "super@cakeflow.com.br",
+  avatarUrl: null,
   roles: ["superadmin"],
   permissions: ["users.index", "users.create"],
 };

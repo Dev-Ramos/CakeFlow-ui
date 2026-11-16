@@ -5,9 +5,8 @@ import { setupInterceptors } from "./interceptors";
 export const api = axios.create({
   baseURL: env.VITE_API_URL,
   timeout: 15000,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  // Sem Content-Type fixo de propósito: o Axios põe `application/json` para objetos e
+  // deixa o `multipart/form-data; boundary=...` para o navegador quando o corpo é FormData.
 });
 
 setupInterceptors(api);
