@@ -34,3 +34,20 @@ describe("mensagem de erro da API", () => {
     expect(await mensagemDe({ foo: 1 })).toBe("Ocorreu um erro inesperado.");
   });
 });
+
+describe("apiCode", () => {
+  async function erroDe(corpo: JsonBodyType) {
+    server.use(http.get(url("/x"), () => HttpResponse.json(corpo, { status: 422 })));
+    return (await api.get("/x").catch((e: unknown) => e)) as import("./errors").ApiError;
+  }
+
+  it("expõe o code do corpo da API (e não o code do Axios)", async () => {
+    const erro = await erroDe({ code: "invalid_current_password", errors: ["Current password is invalid"] });
+    expect(erro.apiCode).toBe("invalid_current_password");
+    expect(erro.code).toBe("ERR_BAD_REQUEST");
+  });
+
+  it("é indefinido quando o corpo não traz code", async () => {
+    expect((await erroDe({ error: "x" })).apiCode).toBeUndefined();
+  });
+});
