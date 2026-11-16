@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
-import type { FieldPath, FieldValues, RegisterOptions } from "react-hook-form";
+import { useController, type FieldPath, type FieldValues, type RegisterOptions } from "react-hook-form";
 import { cn } from "../../lib/cn";
+import { mesmoValor, type ValorDeOpcao } from "../../lib/valorDeOpcao";
 import { FieldMessages, fieldDescribedBy } from "../Field";
 import { useCampoFormulario } from "./contexto";
 import type { FormularioOpcao } from "./Select";
@@ -20,7 +21,7 @@ export interface FormularioRadioBoxProps<TCampos extends FieldValues> {
   controlClassName?: string;
 }
 
-/** Grupo de rádios integrado ao RHF. Valor: `string`. */
+/** Grupo de rádios integrado ao RHF. Valor: o `value` da opção, no tipo dela (`string` ou `number`). */
 export function FormularioRadioBox<TCampos extends FieldValues>({
   name,
   label,
@@ -35,7 +36,8 @@ export function FormularioRadioBox<TCampos extends FieldValues>({
   optionClassName,
   controlClassName,
 }: FormularioRadioBoxProps<TCampos>) {
-  const { id, erro, register } = useCampoFormulario<TCampos>(name, idProp);
+  const { id, erro, control } = useCampoFormulario<TCampos>(name, idProp);
+  const { field } = useController({ control, name, rules });
 
   return (
     <fieldset className={cn("space-y-1", className)}>
@@ -62,7 +64,11 @@ export function FormularioRadioBox<TCampos extends FieldValues>({
               <input
                 id={optionId}
                 type="radio"
-                value={option.value}
+                value={String(option.value)}
+                name={field.name}
+                checked={mesmoValor(field.value as ValorDeOpcao | null | undefined, option.value)}
+                onChange={() => field.onChange(option.value)}
+                onBlur={field.onBlur}
                 disabled={disabled || option.disabled}
                 required={required}
                 aria-invalid={erro ? true : undefined}
@@ -72,7 +78,6 @@ export function FormularioRadioBox<TCampos extends FieldValues>({
                   "disabled:cursor-not-allowed disabled:opacity-50",
                   controlClassName,
                 )}
-                {...register(name, rules)}
               />
               {option.label}
             </label>

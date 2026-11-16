@@ -1,11 +1,13 @@
 import type { ComponentProps, ReactNode } from "react";
-import type { FieldPath, FieldValues, RegisterOptions } from "react-hook-form";
+import { useController, type FieldPath, type FieldValues, type RegisterOptions } from "react-hook-form";
+import { deTexto, paraTexto, type ValorDeOpcao } from "../../lib/valorDeOpcao";
 import { Field, fieldDescribedBy } from "../Field";
 import { SelectNativo } from "../SelectNativo";
 import { useCampoFormulario } from "./contexto";
 
 export interface FormularioOpcao {
-  value: string;
+  /** `string` ou `number`: o campo guarda o valor no tipo original da opção. */
+  value: ValorDeOpcao;
   label: ReactNode;
   disabled?: boolean;
 }
@@ -43,8 +45,13 @@ function SelectRHF<TCampos extends FieldValues>({
   onBlur,
   ...props
 }: BaseSelectProps<TCampos> & { multiple: boolean }) {
-  const { id, erro, register } = useCampoFormulario<TCampos>(name, idProp);
-  const registro = register(name, rules);
+  const { id, erro, control } = useCampoFormulario<TCampos>(name, idProp);
+  const { field } = useController({ control, name, rules });
+
+  // O DOM só entrega texto: volta ao tipo original (ex.: id numérico) da opção escolhida.
+  const valorDoCampo = multiple
+    ? (Array.isArray(field.value) ? (field.value as ValorDeOpcao[]) : []).map(paraTexto)
+    : paraTexto(field.value as ValorDeOpcao | null | undefined);
 
   return (
     <Field
@@ -63,13 +70,18 @@ function SelectRHF<TCampos extends FieldValues>({
         aria-describedby={fieldDescribedBy(id, { hint: Boolean(descricao), error: Boolean(erro) })}
         className={controlClassName}
         {...props}
-        {...registro}
+        name={field.name}
+        value={valorDoCampo}
         onChange={(event) => {
-          void registro.onChange(event);
+          field.onChange(
+            multiple
+              ? Array.from(event.target.selectedOptions, (o) => deTexto(options, o.value))
+              : deTexto(options, event.target.value),
+          );
           onChange?.(event);
         }}
         onBlur={(event) => {
-          void registro.onBlur(event);
+          field.onBlur();
           onBlur?.(event);
         }}
       >
@@ -83,14 +95,14 @@ function SelectRHF<TCampos extends FieldValues>({
   );
 }
 
-/** Select nativo integrado ao RHF. Valor: `string` (use `value: ''` para "Todos"). */
+/** Select nativo integrado ao RHF. Valor: o `value` da opção, no tipo dela (use `value: ''` para "Todos"). */
 export function FormularioSelect<TCampos extends FieldValues>(
   props: FormularioSelectProps<TCampos>,
 ) {
   return <SelectRHF<TCampos> {...props} multiple={false} />;
 }
 
-/** Select nativo múltiplo integrado ao RHF. Valor: `string[]`. */
+/** Select nativo múltiplo integrado ao RHF. Valor: lista com o `value` das opções, no tipo delas. */
 export function FormularioSelectMulti<TCampos extends FieldValues>(
   props: FormularioSelectMultiProps<TCampos>,
 ) {

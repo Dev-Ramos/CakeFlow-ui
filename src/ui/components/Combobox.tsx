@@ -4,21 +4,32 @@ import { controlBase, controlHeight } from "../design-system/variants";
 import { cn } from "../lib/cn";
 import { fold } from "../lib/fold";
 import { usePopupOverflow } from "../lib/popupOverflow";
+import { mesmoValor, type ValorDeOpcao } from "../lib/valorDeOpcao";
 import { fieldDescribedBy } from "./Field";
 
-export interface ComboboxOption {
-  value: string;
+export interface ComboboxOption<V extends ValorDeOpcao = string> {
+  value: V;
   label: string;
   hint?: string;
 }
 
-export interface ComboboxProps {
+export interface ComboboxProps<V extends ValorDeOpcao = string> {
   id?: string;
-  options: ComboboxOption[];
-  value: string | null;
-  onChange: (value: string | null) => void;
-  /** Notifica o texto digitado na busca (para busca server-side). */
+  options: ComboboxOption<V>[];
+  value: V | null;
+  /** Devolve o `value` da opção no tipo original (número continua número). */
+  onChange: (value: V | null) => void;
+  /**
+   * Notifica o texto digitado na busca. Quando informado, a busca é server-side:
+   * o componente NÃO filtra `options` localmente — quem usa troca as opções (e
+   * aplica o debounce, ver `useDebounce`). Chamado com "" ao abrir e ao fechar.
+   */
   onSearch?: (query: string) => void;
+  /**
+   * Opção já escolhida, para mostrar o rótulo antes de ela vir numa busca
+   * (ex.: edição de um registro). Só vale quando seu `value` é o valor atual.
+   */
+  selectedOption?: ComboboxOption<V>;
   /** Texto exibido no trigger quando nada está selecionado. */
   placeholder?: string;
   /** Placeholder do input de busca. */
@@ -45,12 +56,13 @@ export interface ComboboxProps {
  * `absolute`, sem portal) para ser plenamente testável e evitar os problemas de
  * pointer/portal do Radix Select. Presentacional — não decide regra de negócio.
  */
-export function Combobox({
+export function Combobox<V extends ValorDeOpcao = string>({
   id,
   options,
   value,
   onChange,
   onSearch,
+  selectedOption,
   placeholder = "Selecione",
   searchPlaceholder = "Buscar…",
   loading = false,
@@ -61,7 +73,7 @@ export function Combobox({
   "aria-label": ariaLabel,
   "aria-describedby": ariaDescribedBy,
   className,
-}: ComboboxProps) {
+}: ComboboxProps<V>) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndexBruto, setActiveIndex] = useState(0);
@@ -75,16 +87,27 @@ export function Combobox({
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Com busca server-side a lista muda a cada termo: lembra a última opção escolhida
+  // para o trigger continuar mostrando o rótulo quando ela sai da lista.
+  const [lembrada, setLembrada] = useState<ComboboxOption<V> | null>(null);
+
   const selected = useMemo(
-    () => options.find((option) => option.value === value) ?? null,
-    [options, value],
+    () =>
+      options.find((option) => mesmoValor(option.value, value)) ??
+      (lembrada && mesmoValor(lembrada.value, value) ? lembrada : null) ??
+      (selectedOption && mesmoValor(selectedOption.value, value) ? selectedOption : null),
+    [options, value, lembrada, selectedOption],
   );
 
+  const buscaNoServidor = onSearch !== undefined;
   const filtered = useMemo(() => {
+    // Com `onSearch`, a lista já vem filtrada pelo servidor: filtrar de novo esconderia
+    // resultados que casaram por um campo que não aparece no rótulo.
+    if (buscaNoServidor) return options;
     const q = fold(query.trim());
     if (!q) return options;
     return options.filter((option) => fold(`${option.label} ${option.hint ?? ""}`).includes(q));
-  }, [options, query]);
+  }, [options, query, buscaNoServidor]);
 
   // Mantém o destaque dentro dos limites da lista filtrada (derivado, sem efeito).
   const activeIndex =
@@ -111,7 +134,7 @@ export function Combobox({
     if (disabled) return;
     setQuery("");
     onSearch?.("");
-    const currentIndex = options.findIndex((option) => option.value === value);
+    const currentIndex = options.findIndex((option) => mesmoValor(option.value, value));
     setActiveIndex(currentIndex >= 0 ? currentIndex : 0);
     setOpen(true);
   }
@@ -123,7 +146,8 @@ export function Combobox({
     onSearch?.("");
   }
 
-  function selectOption(option: ComboboxOption) {
+  function selectOption(option: ComboboxOption<V>) {
+    setLembrada(option);
     onChange(option.value);
     closeList();
   }
@@ -243,7 +267,7 @@ export function Combobox({
                 <li className="px-2 py-1.5 text-body-md text-on-surface-variant">Nenhum resultado</li>
               ) : (
                 filtered.map((option, index) => {
-                  const isSelected = option.value === value;
+                  const isSelected = mesmoValor(option.value, value);
                   const isActive = index === activeIndex;
                   return (
                     <li
