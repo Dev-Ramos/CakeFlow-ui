@@ -7,8 +7,8 @@ import { PageShell } from "@/ui/components/PageShell";
 import { useAuth } from "../hooks/useAuth";
 
 export interface RequirePermissionProps {
-  /** Permissão no formato `recurso.acao` (ex.: `users.index`). */
-  permission: string;
+  /** Permissão no formato `recurso.acao` (ex.: `users.index`). Com uma lista, basta ter uma delas. */
+  permission: string | string[];
   children: ReactNode;
 }
 
@@ -19,7 +19,8 @@ export interface RequirePermissionProps {
 export function RequirePermission({ permission, children }: RequirePermissionProps) {
   const { can } = useAuth();
 
-  if (can(permission)) return <>{children}</>;
+  const permissoes = Array.isArray(permission) ? permission : [permission];
+  if (permissoes.some(can)) return <>{children}</>;
 
   return (
     <PageShell>

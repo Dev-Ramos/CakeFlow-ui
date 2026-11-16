@@ -42,4 +42,26 @@ describe("RequirePermission", () => {
     expect(screen.getByRole("heading", { name: "Acesso negado" })).toBeInTheDocument();
     expect(screen.queryByText("conteúdo liberado")).not.toBeInTheDocument();
   });
+
+  it("com uma lista de permissões, basta ter uma delas", () => {
+    logarComo(["fillings.index"]);
+    renderAuth(
+      <RequirePermission permission={["pan_specs.index", "batter_types.index", "fillings.index"]}>
+        <p>conteúdo liberado</p>
+      </RequirePermission>,
+    );
+
+    expect(screen.getByText("conteúdo liberado")).toBeInTheDocument();
+  });
+
+  it("com uma lista de permissões, nega quando não tem nenhuma", () => {
+    logarComo(["users.index"]);
+    renderAuth(
+      <RequirePermission permission={["pan_specs.index", "batter_types.index"]}>
+        <p>conteúdo liberado</p>
+      </RequirePermission>,
+    );
+
+    expect(screen.getByRole("heading", { name: "Acesso negado" })).toBeInTheDocument();
+  });
 });
