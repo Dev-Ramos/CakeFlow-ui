@@ -2,20 +2,24 @@ import * as SelectPrimitive from "@radix-ui/react-select";
 import { ChevronDown } from "lucide-react";
 import { controlBase, controlHeight } from "../design-system/variants";
 import { cn } from "../lib/cn";
+import { paraTexto, type ValorDeOpcao } from "../lib/valorDeOpcao";
 
-export interface SelectOption {
-  value: string;
+export interface SelectOption<V extends ValorDeOpcao = string> {
+  value: V;
   label: string;
 }
 
-export interface SelectProps {
-  value: string;
-  onValueChange: (value: string) => void;
-  options: SelectOption[];
+export interface SelectProps<V extends ValorDeOpcao = string> {
+  value: V;
+  /** Recebe o valor no tipo original da opção (número continua número). */
+  onValueChange: (value: V) => void;
+  options: SelectOption<V>[];
   placeholder?: string;
   id?: string;
   disabled?: boolean;
   ariaLabel?: string;
+  /** `md` (42px, padrão dos formulários) ou `sm` (32px, para barras e rodapés de tabela). */
+  size?: "md" | "sm";
 }
 
 /**
@@ -23,7 +27,7 @@ export interface SelectProps {
  * conteúdo em portal. Não aceita `value=""` (limitação do Radix) — para opção
  * "Todos" use `SelectNativo`. Presentacional.
  */
-export function Select({
+export function Select<V extends ValorDeOpcao = string>({
   value,
   onValueChange,
   options,
@@ -31,9 +35,18 @@ export function Select({
   id,
   disabled,
   ariaLabel,
-}: SelectProps) {
+  size = "md",
+}: SelectProps<V>) {
   return (
-    <SelectPrimitive.Root value={value} onValueChange={onValueChange} disabled={disabled}>
+    <SelectPrimitive.Root
+      value={paraTexto(value)}
+      // O Radix só entrega texto: volta ao tipo original da opção escolhida.
+      onValueChange={(texto) => {
+        const opcao = options.find((o) => paraTexto(o.value) === texto);
+        if (opcao) onValueChange(opcao.value);
+      }}
+      disabled={disabled}
+    >
       <SelectPrimitive.Trigger
         id={id}
         aria-label={ariaLabel}
@@ -42,6 +55,7 @@ export function Select({
           controlHeight,
           controlBase,
           "disabled:cursor-not-allowed data-placeholder:text-outline",
+          size === "sm" && "h-8 gap-1.5 px-2.5 py-0 text-label-md",
         )}
       >
         <SelectPrimitive.Value placeholder={placeholder} />
@@ -60,7 +74,7 @@ export function Select({
             {options.map((option) => (
               <SelectPrimitive.Item
                 key={option.value}
-                value={option.value}
+                value={paraTexto(option.value)}
                 className={cn(
                   "relative flex cursor-pointer select-none items-center rounded px-2 py-1.5 text-body-md text-on-surface",
                   "outline-none data-highlighted:bg-surface-container",
