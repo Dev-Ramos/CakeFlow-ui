@@ -1,118 +1,145 @@
-import { ChevronsLeft, ChevronsRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "../lib/cn";
 import { Button } from "./Button";
-import { Select } from "./Select";
+import { LimitSelect } from "./LimitSelect";
 
 export interface PaginationProps {
-  /** Página atual (1-based); é limitada a `[1, totalPages]`. */
+  /** Página atual (a partir de 1); é limitada ao intervalo válido. */
   page: number;
-  /** Tamanho da página usado quando `size` não é informado. */
-  pageSize: number;
-  /** Total de registros (vem da API). */
-  total: number;
+  /** Itens por página. */
+  limit: number;
+  /** Total de registros. */
+  count: number;
+  /** Total de páginas. Se ausente, é calculado a partir de `count` e `limit`. */
+  pages?: number;
   onPageChange: (page: number) => void;
-  /** A presença de `size` liga o modo "rico" (Primeira/Última e texto "Mostrando…"). */
-  size?: number;
-  /** Mostra o seletor "N por página" (oculto em celular). */
-  onSizeChange?: (size: number) => void;
-  tamanhos?: number[];
+  /** Quando informado, mostra o seletor de itens por página. */
+  onLimitChange?: (limit: number) => void;
+  /** Opções do seletor de limite. */
+  limits?: number[];
+  /** Nome dos itens no texto de resumo (ex.: "colaboradores"). */
+  rotulo?: string;
   className?: string;
 }
 
-const TAMANHOS_PADRAO = [10, 20, 50, 100];
+/** Páginas a mostrar: todas se forem poucas; senão a primeira, a última e as vizinhas da atual. */
+function paginasVisiveis(atual: number, total: number): Array<number | "…"> {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
 
-/** Paginação controlada e presentacional. Modo simples (sem `size`) ou rico. */
+  const janela = new Set([1, total, atual - 1, atual, atual + 1]);
+  const ordenadas = [...janela].filter((n) => n >= 1 && n <= total).sort((a, b) => a - b);
+
+  const resultado: Array<number | "…"> = [];
+  ordenadas.forEach((numero, indice) => {
+    const anterior = ordenadas[indice - 1];
+    if (anterior !== undefined && numero - anterior > 1) resultado.push("…");
+    resultado.push(numero);
+  });
+  return resultado;
+}
+
+/**
+ * Paginação controlada e presentacional, no padrão do rodapé de tabela do
+ * design: resumo à esquerda; "Exibir N por página", Anterior, páginas
+ * numeradas e Próxima à direita. Usa os mesmos nomes do `meta` da API
+ * (`page`, `limit`, `count`, `pages`). Feita para ir dentro do `Card` da tabela.
+ */
 export function Pagination({
   page,
-  pageSize,
-  total,
+  limit,
+  count,
+  pages,
   onPageChange,
-  size,
-  onSizeChange,
-  tamanhos = TAMANHOS_PADRAO,
+  onLimitChange,
+  limits,
+  rotulo = "registros",
   className,
 }: PaginationProps) {
-  const effectiveSize = size ?? pageSize;
-  const rich = size != null;
+  const totalDePaginas = Math.max(1, pages ?? Math.ceil(count / limit));
+  const paginaAtual = Math.min(Math.max(page, 1), totalDePaginas);
 
-  const totalPages = Math.max(1, Math.ceil(total / effectiveSize));
-  const currentPage = Math.min(Math.max(page, 1), totalPages);
+  const primeiroItem = count === 0 ? 0 : (paginaAtual - 1) * limit + 1;
+  const ultimoItem = Math.min(paginaAtual * limit, count);
 
-  const firstItem = total === 0 ? 0 : (currentPage - 1) * effectiveSize + 1;
-  const lastItem = Math.min(currentPage * effectiveSize, total);
+  const naPrimeira = paginaAtual <= 1;
+  const naUltima = paginaAtual >= totalDePaginas;
 
-  const isFirstPage = currentPage <= 1;
-  const isLastPage = currentPage >= totalPages;
+  const numeros = "text-on-surface";
+  // Desabilitado no rodapé do design: fundo branco e texto apagado (sem o rosado dos botões cheios).
+  const botaoDeNavegacao = "disabled:bg-surface-container-lowest disabled:text-outline";
 
   return (
     <nav
       aria-label="Paginação"
       className={cn(
-        "mt-4 flex items-center justify-between gap-4 text-body-sm text-on-surface-variant sm:text-body-md",
+        "flex flex-wrap items-center justify-between gap-3 border-t border-outline-variant px-4 py-3",
+        "text-body-sm text-tertiary",
         className,
       )}
     >
-      <div className="flex items-center gap-2 sm:gap-4">
-        <span>
-          {rich ? "Mostrando " : ""}
-          {firstItem}–{lastItem} de {total}
-        </span>
-        {onSizeChange && (
-          <div className="hidden items-center gap-2 sm:flex">
-            <div className="w-20">
-              <Select
-                ariaLabel="Itens por página"
-                value={String(effectiveSize)}
-                onValueChange={(novo) => onSizeChange(Number(novo))}
-                options={tamanhos.map((t) => ({ value: String(t), label: String(t) }))}
-              />
-            </div>
-            <span>por página</span>
-          </div>
+      <p>
+        Mostrando <strong className={numeros}>{primeiroItem}</strong> a{" "}
+        <strong className={numeros}>{ultimoItem}</strong> de{" "}
+        <strong className={numeros}>{count}</strong> {rotulo}
+      </p>
+
+      <div className="flex flex-wrap items-center gap-3">
+        {onLimitChange && (
+          <LimitSelect value={limit} onChange={onLimitChange} limits={limits} className="hidden sm:flex" />
         )}
-      </div>
-      <div className="flex items-center gap-2">
-        {rich && (
+
+        <div className="flex items-center gap-1.5">
           <Button
-            variant="tonal"
-            size="icon"
-            aria-label="Primeira"
-            icon={<ChevronsLeft size={16} aria-hidden="true" />}
-            disabled={isFirstPage}
-            onClick={() => onPageChange(1)}
-            className="hidden sm:flex"
-          />
-        )}
-        <Button
-          variant="tonal"
-          aria-label="Anterior"
-          disabled={isFirstPage}
-          onClick={() => onPageChange(currentPage - 1)}
-        >
-          Anterior
-        </Button>
-        <span aria-live="polite" className="w-8 tabular-nums text-on-surface sm:w-12">
-          {currentPage} / {totalPages}
-        </span>
-        <Button
-          variant="tonal"
-          aria-label="Próxima"
-          disabled={isLastPage}
-          onClick={() => onPageChange(currentPage + 1)}
-        >
-          Próxima
-        </Button>
-        {rich && (
+            variant="neutral"
+            size="sm"
+            className={botaoDeNavegacao}
+            disabled={naPrimeira}
+            onClick={() => onPageChange(paginaAtual - 1)}
+          >
+            <ChevronLeft size={14} aria-hidden="true" />
+            Anterior
+          </Button>
+
+          {paginasVisiveis(paginaAtual, totalDePaginas).map((item, indice) =>
+            item === "…" ? (
+              <span
+                key={`reticencias-${indice}`}
+                aria-hidden="true"
+                className="hidden w-6 text-center text-tertiary sm:inline-block"
+              >
+                …
+              </span>
+            ) : (
+              <button
+                key={item}
+                type="button"
+                aria-label={`Página ${item}`}
+                aria-current={item === paginaAtual ? "page" : undefined}
+                onClick={() => onPageChange(item)}
+                className={cn(
+                  "h-8 min-w-8 rounded-lg px-2 text-label-md tabular-nums transition-colors",
+                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+                  item === paginaAtual
+                    ? "bg-primary text-on-primary"
+                    : "hidden border border-outline-variant bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-low sm:inline-block",
+                )}
+              >
+                {item}
+              </button>
+            ),
+          )}
+
           <Button
-            variant="tonal"
-            size="icon"
-            aria-label="Última"
-            icon={<ChevronsRight size={16} aria-hidden="true" />}
-            disabled={isLastPage}
-            onClick={() => onPageChange(totalPages)}
-            className="hidden sm:flex"
-          />
-        )}
+            variant="neutral"
+            size="sm"
+            className={botaoDeNavegacao}
+            disabled={naUltima}
+            onClick={() => onPageChange(paginaAtual + 1)}
+          >
+            Próxima
+            <ChevronRight size={14} aria-hidden="true" />
+          </Button>
+        </div>
       </div>
     </nav>
   );

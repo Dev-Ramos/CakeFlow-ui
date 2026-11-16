@@ -3,11 +3,13 @@ import {
   ChefHat,
   CircleHelp,
   CookingPot,
+  KeyRound,
   LayoutDashboard,
   Palette,
   Receipt,
   ShieldCheck,
   Store,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 
@@ -17,6 +19,21 @@ export interface NavItem {
   icon: LucideIcon;
   /** Casa só a rota exata (necessário para o "Início"). */
   end?: boolean;
+  /** Permissão necessária para o item aparecer (`recurso.acao`). Sem ela, é visível a todos. */
+  permission?: string;
+}
+
+/** Grupo expansível: aparece só se ao menos um filho estiver visível. */
+export interface NavGroup {
+  label: string;
+  icon: LucideIcon;
+  children: NavItem[];
+}
+
+export type NavEntry = NavItem | NavGroup;
+
+export function isNavGroup(entrada: NavEntry): entrada is NavGroup {
+  return "children" in entrada;
 }
 
 /**
@@ -33,7 +50,33 @@ export const navPrincipal: NavItem[] = [
   { to: "/duvidas", label: "Dúvidas", icon: CircleHelp },
 ];
 
-export const navRodape: NavItem[] = [
+export const navRodape: NavEntry[] = [
   { to: "/catalogo", label: "Catálogo", icon: BookOpen },
-  { to: "/administracao", label: "Administração", icon: ShieldCheck },
+  {
+    label: "Administração",
+    icon: ShieldCheck,
+    children: [
+      { to: "/administracao/usuarios", label: "Usuários", icon: Users, permission: "users.index" },
+      {
+        to: "/administracao/cargos",
+        label: "Cargos e permissões",
+        icon: KeyRound,
+        permission: "roles.index",
+      },
+    ],
+  },
 ];
+
+/** Mantém só o que o usuário pode ver; grupos sem filhos visíveis somem. */
+export function filtrarPorPermissao(
+  entradas: NavEntry[],
+  can: (permission: string) => boolean,
+): NavEntry[] {
+  const visivel = (item: NavItem) => !item.permission || can(item.permission);
+
+  return entradas.flatMap((entrada): NavEntry[] => {
+    if (!isNavGroup(entrada)) return visivel(entrada) ? [entrada] : [];
+    const filhos = entrada.children.filter(visivel);
+    return filhos.length > 0 ? [{ ...entrada, children: filhos }] : [];
+  });
+}

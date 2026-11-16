@@ -3,12 +3,13 @@ import type { FieldPath, FieldValues, RegisterOptions } from "react-hook-form";
 import { useController } from "react-hook-form";
 import { ComboboxMulti, type ComboboxMultiOption } from "../ComboboxMulti";
 import { Field } from "../Field";
+import type { ValorDeOpcao } from "../../lib/valorDeOpcao";
 import { useCampoFormulario } from "./contexto";
 
 export interface FormularioComboboxMultiProps<TCampos extends FieldValues> {
   name: FieldPath<TCampos>;
   label: ReactNode;
-  options: ComboboxMultiOption[];
+  options: ComboboxMultiOption<ValorDeOpcao>[];
   descricao?: ReactNode;
   rules?: RegisterOptions<TCampos, FieldPath<TCampos>>;
   id?: string;
@@ -19,11 +20,13 @@ export interface FormularioComboboxMultiProps<TCampos extends FieldValues> {
   disabled?: boolean;
   className?: string;
   controlClassName?: string;
-  onChange?: (value: string[]) => void;
+  onChange?: (value: ValorDeOpcao[]) => void;
   onSearch?: (query: string) => void;
+  /** Opções já escolhidas, para mostrar os rótulos antes de virem numa busca server-side. */
+  selectedOptions?: ComboboxMultiOption<ValorDeOpcao>[];
 }
 
-/** Seleção múltipla pesquisável integrada ao RHF. Valor: `string[]`. */
+/** Seleção múltipla pesquisável integrada ao RHF. Valor: lista com o `value` das opções, no tipo delas (`string` ou `number`). */
 export function FormularioComboboxMulti<TCampos extends FieldValues>({
   name,
   label,
@@ -40,6 +43,7 @@ export function FormularioComboboxMulti<TCampos extends FieldValues>({
   controlClassName,
   onChange,
   onSearch,
+  selectedOptions,
 }: FormularioComboboxMultiProps<TCampos>) {
   const { control, getValues, id } = useCampoFormulario<TCampos>(name, idProp);
   const { field, fieldState } = useController({
@@ -63,12 +67,13 @@ export function FormularioComboboxMulti<TCampos extends FieldValues>({
         id={id}
         options={options}
         // Campo ainda não inicializado vira lista vazia: "nada marcado", não "sem estado".
-        value={Array.isArray(field.value) ? field.value.map(String) : []}
+        value={Array.isArray(field.value) ? (field.value as ValorDeOpcao[]) : []}
         onChange={(valores) => {
           field.onChange(valores);
           onChange?.(valores);
         }}
         onSearch={onSearch}
+        selectedOptions={selectedOptions}
         placeholder={placeholder}
         searchPlaceholder={searchPlaceholder}
         loading={loading}

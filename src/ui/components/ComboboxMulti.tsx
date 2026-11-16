@@ -2,10 +2,11 @@ import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 
 import { Check, ChevronsUpDown, Search, X } from "lucide-react";
 import { cn } from "../lib/cn";
 import { fold } from "../lib/fold";
+import { mesmoValor, type ValorDeOpcao } from "../lib/valorDeOpcao";
 import { fieldDescribedBy } from "./Field";
 
-export interface ComboboxMultiOption {
-  value: string;
+export interface ComboboxMultiOption<V extends ValorDeOpcao = string> {
+  value: V;
   label: string;
   hint?: string;
   /**
@@ -15,13 +16,23 @@ export interface ComboboxMultiOption {
   disabled?: boolean;
 }
 
-export interface ComboboxMultiProps {
+export interface ComboboxMultiProps<V extends ValorDeOpcao = string> {
   id?: string;
-  options: ComboboxMultiOption[];
-  value: string[];
-  onChange: (value: string[]) => void;
-  /** Notifica o texto digitado na busca (para busca server-side). */
+  options: ComboboxMultiOption<V>[];
+  value: V[];
+  /** Devolve os valores no tipo original das opções (número continua número). */
+  onChange: (value: V[]) => void;
+  /**
+   * Notifica o texto digitado na busca. Quando informado, a busca é server-side:
+   * o componente NÃO filtra `options` localmente — quem usa troca as opções (e
+   * aplica o debounce, ver `useDebounce`). Chamado com "" ao abrir e ao fechar.
+   */
   onSearch?: (query: string) => void;
+  /**
+   * Opções já escolhidas, para mostrar os rótulos antes de virem numa busca
+   * (ex.: edição de um registro). Só valem para valores que estão em `value`.
+   */
+  selectedOptions?: ComboboxMultiOption<V>[];
   /** Texto do trigger quando nada está selecionado. */
   placeholder?: string;
   searchPlaceholder?: string;
@@ -35,12 +46,13 @@ export interface ComboboxMultiProps {
 }
 
 /** Seleção múltipla com busca. Mesma ergonomia do `Combobox`; a lista não fecha ao marcar. */
-export function ComboboxMulti({
+export function ComboboxMulti<V extends ValorDeOpcao = string>({
   id,
   options,
   value,
   onChange,
   onSearch,
+  selectedOptions,
   placeholder = "Selecione",
   searchPlaceholder = "Buscar…",
   loading = false,
@@ -50,7 +62,7 @@ export function ComboboxMulti({
   "aria-label": ariaLabel,
   "aria-describedby": ariaDescribedBy,
   className,
-}: ComboboxMultiProps) {
+}: ComboboxMultiProps<V>) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndexBruto, setActiveIndex] = useState(0);
@@ -67,16 +79,33 @@ export function ComboboxMulti({
    * Ordem das opções, não a de clique: senão o mesmo conjunto aparece escrito de
    * um jeito a cada vez que o usuário marca e desmarca.
    */
-  const selecionados = useMemo(
-    () => options.filter((option) => value.includes(option.value)),
-    [options, value],
-  );
+  // Com busca server-side a lista muda a cada termo: lembra as opções já vistas para os
+  // chips continuarem com rótulo quando a opção sai da lista.
+  const [lembradas, setLembradas] = useState<ComboboxMultiOption<V>[]>([]);
 
+  const selecionados = useMemo(() => {
+    const daLista = options.filter((option) => value.some((v) => mesmoValor(v, option.value)));
+    const fora = value
+      .filter((v) => !daLista.some((option) => mesmoValor(option.value, v)))
+      .map(
+        (v) =>
+          lembradas.find((option) => mesmoValor(option.value, v)) ??
+          selectedOptions?.find((option) => mesmoValor(option.value, v)),
+      )
+      .filter((option): option is ComboboxMultiOption<V> => option !== undefined);
+    return [...daLista, ...fora];
+  }, [options, value, lembradas, selectedOptions]);
+
+  const estaMarcado = (v: V) => value.some((atual) => mesmoValor(atual, v));
+
+  const buscaNoServidor = onSearch !== undefined;
   const filtered = useMemo(() => {
+    // Com `onSearch`, a lista já vem filtrada pelo servidor.
+    if (buscaNoServidor) return options;
     const q = fold(query.trim());
     if (!q) return options;
     return options.filter((option) => fold(`${option.label} ${option.hint ?? ""}`).includes(q));
-  }, [options, query]);
+  }, [options, query, buscaNoServidor]);
 
   // Mantém o destaque dentro dos limites da lista filtrada (derivado, sem efeito).
   const activeIndex =
@@ -112,11 +141,12 @@ export function ComboboxMulti({
   }
 
   /** Alterna sem fechar: o ponto do múltiplo é marcar vários numa abertura só. */
-  function alternar(option: ComboboxMultiOption) {
+  function alternar(option: ComboboxMultiOption<V>) {
     if (option.disabled) return;
+    setLembradas((atual) => [...atual.filter((o) => !mesmoValor(o.value, option.value)), option]);
     onChange(
-      value.includes(option.value)
-        ? value.filter((v) => v !== option.value)
+      estaMarcado(option.value)
+        ? value.filter((v) => !mesmoValor(v, option.value))
         : [...value, option.value],
     );
   }
@@ -222,7 +252,7 @@ export function ComboboxMulti({
             <button
               type="button"
               aria-label="Limpar seleção"
-              onClick={() => onChange(value.filter((v) => !removiveis.some((o) => o.value === v)))}
+              onClick={() => onChange(value.filter((v) => !removiveis.some((o) => mesmoValor(o.value, v))))}
               className={cn(
                 "flex h-6 w-6 shrink-0 items-center justify-center rounded text-on-surface-variant",
                 "hover:bg-surface-container hover:text-on-surface",
@@ -268,7 +298,7 @@ export function ComboboxMulti({
                 <li className="px-2 py-1.5 text-body-md text-on-surface-variant">Nenhum resultado</li>
               ) : (
                 filtered.map((option, index) => {
-                  const marcado = value.includes(option.value);
+                  const marcado = estaMarcado(option.value);
                   const isActive = index === activeIndex;
                   return (
                     <li

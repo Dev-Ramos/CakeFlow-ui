@@ -16,7 +16,11 @@ const layer = (name, forbidden, message) => ({
     'no-restricted-imports': [
       'error',
       {
-        patterns: forbidden.map((group) => ({ group: [group], message })),
+        // Cada item é um padrão, ou uma lista (padrão + exceções com "!").
+        patterns: forbidden.map((group) => ({
+          group: Array.isArray(group) ? group : [group],
+          message,
+        })),
       },
     ],
   },
@@ -50,7 +54,8 @@ export default defineConfig([
     'domains',
     [
       '@/app/**',
-      '@/domains/*/components/**',
+      // Exceção: o gate de permissão é infraestrutura de autenticação usada nas rotas dos domínios.
+      ['@/domains/*/components/**', '!@/domains/auth/components/RequirePermission'],
       '@/domains/*/pages/**',
     ],
     'Domínios não importam app; entre domínios, só api/hooks/types (imports do próprio domínio são relativos).',

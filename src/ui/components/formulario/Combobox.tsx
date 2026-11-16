@@ -3,12 +3,14 @@ import type { FieldPath, FieldValues, RegisterOptions } from "react-hook-form";
 import { useController } from "react-hook-form";
 import { Combobox, type ComboboxOption } from "../Combobox";
 import { Field } from "../Field";
+import type { ValorDeOpcao } from "../../lib/valorDeOpcao";
 import { useCampoFormulario } from "./contexto";
 
 export interface FormularioComboboxProps<TCampos extends FieldValues> {
   name: FieldPath<TCampos>;
   label: ReactNode;
-  options: ComboboxOption[];
+  /** Valores `string | number`: o campo guarda o valor no tipo original da opção (id numérico fica número). */
+  options: ComboboxOption<ValorDeOpcao>[];
   descricao?: ReactNode;
   rules?: RegisterOptions<TCampos, FieldPath<TCampos>>;
   id?: string;
@@ -21,13 +23,15 @@ export interface FormularioComboboxProps<TCampos extends FieldValues> {
   className?: string;
   controlClassName?: string;
   /** Valor externo opcional para controles derivados de `watch` (ex.: edição inicial). */
-  value?: string | null;
-  onChange?: (value: string | null) => void;
+  value?: ValorDeOpcao | null;
+  onChange?: (value: ValorDeOpcao | null) => void;
   onSearch?: (query: string) => void;
+  /** Opção já escolhida, para mostrar o rótulo antes de vir numa busca server-side. */
+  selectedOption?: ComboboxOption<ValorDeOpcao>;
 }
 
 /**
- * Combobox pesquisável integrado ao RHF. Valor: `string` — `''` quando vazio
+ * Combobox pesquisável integrado ao RHF. Valor: o `value` da opção, no tipo dela (`string` ou `number`) — `''` quando vazio
  * (nunca `null`/`undefined`, para manter o controle controlado).
  */
 export function FormularioCombobox<TCampos extends FieldValues>({
@@ -48,6 +52,7 @@ export function FormularioCombobox<TCampos extends FieldValues>({
   value,
   onChange,
   onSearch,
+  selectedOption,
 }: FormularioComboboxProps<TCampos>) {
   const { control, getValues, id } = useCampoFormulario<TCampos>(name, idProp);
   const { field, fieldState } = useController({
@@ -70,13 +75,14 @@ export function FormularioCombobox<TCampos extends FieldValues>({
       <Combobox
         id={id}
         options={options}
-        // Normaliza ids numéricos recebidos da API para a mesma representação das opções.
-        value={value ?? (field.value == null || field.value === "" ? null : String(field.value))}
+        // O Combobox compara por texto, então `3` e `"3"` casam; vazio vira `null`.
+        value={value ?? (field.value == null || field.value === "" ? null : (field.value as ValorDeOpcao))}
         onChange={(novo) => {
           field.onChange(novo ?? "");
           onChange?.(novo);
         }}
         onSearch={onSearch}
+        selectedOption={selectedOption}
         placeholder={placeholder}
         searchPlaceholder={searchPlaceholder}
         loading={loading}

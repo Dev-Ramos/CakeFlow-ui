@@ -2,6 +2,12 @@
 @import "tw-animate-css";
 @import "./ui/design-system/tokens.css";
 
+/* Ícones (brancos) do Checkbox: check de marcado e traço de indeterminado. */
+:root {
+  --checkbox-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 8.5l3 3 6-7'/%3E%3C/svg%3E");
+  --checkbox-dash: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M4 8h8'/%3E%3C/svg%3E");
+}
+
 @layer base {
   * {
     @apply border-outline-variant;
